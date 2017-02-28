@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"strings"
 )
@@ -43,6 +42,8 @@ var size VMSyze = MediumVM
 var efi bool
 var cidata string // Cloud init iso for running cloud images.
 var cloud bool
+var workdir string
+var vmDir string
 
 func vmxSupport() bool {
 	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run()
@@ -51,7 +52,6 @@ func vmxSupport() bool {
 		return false
 	}
 	return true
-
 }
 
 func getHostOpts(s VMSyze) (opts HostOpts) {
@@ -83,14 +83,14 @@ func startVM() {
 	// Docker arguments
 	command := fmt.Sprintf("run --name %v -td --privileged ", name)
 	command += fmt.Sprintf("-v %v:%v ", imageFile, imageFile)
-	command += fmt.Sprintf("-v %v:/image/image -e AUTO_ATTACH=yes ", cowImage)
-	command += fmt.Sprintf("-v /var/lib/vms/%v:/var/lib/vms/%v ", name, name)
+	command += fmt.Sprintf("-v %v/%v.img:/image/image -e AUTO_ATTACH=yes ", vmDir, name)
+	command += fmt.Sprintf("-v %v:%v ", vmDir, vmDir)
 	if cloud {
 		command += fmt.Sprintf("-v %v:/cidata.iso ", cidata)
 	}
 
 	// Qemu arguments, passed to the container.
-	command += fmt.Sprintf("obedmr/govm -vnc unix:/var/lib/vms/%v/vnc ", name)
+	command += fmt.Sprintf("obedmr/govm -vnc unix:%v/vnc ", vmDir)
 	if efi {
 		command += "-bios /OVMF.fd "
 	}
@@ -117,7 +117,7 @@ func startVM() {
 
 func genCiData() {
 	// genCiData takes the directory cloud-init to generate a cloud-init iso.
-	command_args := "--output cidata.iso -volid config-2 -joliet -rock cloud-init"
+	command_args := fmt.Sprintf("--output %v/cidata.iso -volid config-2 -joliet -rock %v/cloud-init", vmDir, vmDir)
 	sc := strings.Split(command_args, " ")
 	err := exec.Command("genisoimage", sc...).Run()
 	if err != nil {
@@ -156,52 +156,55 @@ func main() {
 	}
 
 	// Test the working directory
-	currentUser, _ := user.Current()
-	workdir := currentUser.HomeDir + "/govm"
+	workdir = "/var/lib/govm"
 	_, err = os.Stat(workdir)
 	if err != nil {
-		fmt.Println("~/govm does not exists. Trying to create it.")
-		// Try to create the dir
-		err = os.Mkdir(workdir, 0777)
-		if err != nil {
-			os.Exit(1)
-		} else {
-			fmt.Println("Created " + workdir)
-		}
-
-	}
-
-	// Handle cloud argument argument
-	if cloud {
-		cidata, _ = filepath.Abs("cidata.iso")
-		genCiData()
+		fmt.Println("/var/lib/govm does not exists. Run the setup.sh first!")
+		os.Exit(1)
 	}
 
 	// Perform a copy-on-write
-	// First create the holding dir
-	holdDir := workdir + "/" + name
-	_, err = os.Stat(holdDir)
+	// First create the VM data directory
+	UUIDcmd, _ := exec.Command("uuidgen").Output()
+	vmUUID := strings.TrimSpace(string(UUIDcmd))
+	vmDir = workdir + "/data" + "/" + name + "/" + vmUUID
+	_, err = os.Stat(vmDir)
 	if err != nil {
-		err = os.Mkdir(holdDir, 0777)
+		err = os.MkdirAll(vmDir, 0777)
 		if err != nil {
 			fmt.Println("Unable to create the hold dir for the cow image")
 			fmt.Println(err)
+			os.Exit(1)
 		}
 	}
-	// COW
+	// Create copy-on-write image
 	cowArgs := fmt.Sprintf("create -f qcow2 -o backing_file=%v temp.img", imageFile)
 	splittedCowArgs := strings.Split(cowArgs, " ")
-	fmt.Println(splittedCowArgs)
+	//fmt.Println(splittedCowArgs)
 	err = exec.Command("qemu-img", splittedCowArgs...).Run()
 	if err != nil {
 		fmt.Println("Unable to create the cow image")
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	cowImage = holdDir + "/" + name + "01.img"
+	cowImage = vmDir + "/" + name + ".img"
 	err = exec.Command("mv", "temp.img", cowImage).Run()
-	fmt.Println(imageFile)
 
+	// Handle cloud argument argument
+	if cloud {
+		// Copy cloud-init directory to vmDir
+		cpArgs := fmt.Sprintf("-r %v/cloud-init %v", workdir, vmDir)
+		splittedCpArgs := strings.Split(cpArgs, " ")
+		err = exec.Command("cp", splittedCpArgs...).Run()
+		if err != nil {
+			fmt.Println("Unable to copy cloud-init directory")
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// Generate a cloud-init iso
+		cidata, _ = filepath.Abs(vmDir + "/cidata.iso")
+		genCiData()
+	}
 	startVM()
 
 }
