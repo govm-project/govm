@@ -44,6 +44,7 @@ var cidata string // Cloud init iso for running cloud images.
 var cloud bool
 var workdir string
 var vmDir string
+var verbose bool
 
 func vmxSupport() bool {
 	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run()
@@ -79,7 +80,7 @@ func getHostOpts(s VMSyze) (opts HostOpts) {
 }
 
 func startVM() {
-	fmt.Println("Starting VM")
+	fmt.Println("Starting VM " + name)
 	// Docker arguments
 	command := fmt.Sprintf("run --name %v -td --privileged ", name)
 	command += fmt.Sprintf("-v %v:%v ", imageFile, imageFile)
@@ -106,13 +107,27 @@ func startVM() {
 
 	// Split the string command for it's execution. See os/exec.
 	splitted_command := strings.Split(command, " ")
-	fmt.Println(splitted_command)
+	if verbose {
+		fmt.Println(splitted_command)
+	}
 	err := exec.Command("docker", splitted_command...).Run()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
+}
+
+func showInfo() {
+	vmIPArgs := fmt.Sprintf("inspect -f {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}} %v", name)
+	svmIPArgs := strings.Split(vmIPArgs, " ")
+	vmIPCommand, err := exec.Command("docker", svmIPArgs...).Output()
+	if err != nil {
+		fmt.Println("Error running docker inspect command")
+		fmt.Println(err)
+	}
+	vmIP := string(vmIPCommand)
+	fmt.Println("[" + name + "]" + " info:\n" + "  VM IP: " + vmIP)
 }
 
 func genCiData() {
@@ -135,6 +150,7 @@ func init() {
 	flag.BoolVar(&large, "large", false, "Small VM flavor (8G ram, cpus=8,cores=4,threads=4)")
 	flag.BoolVar(&efi, "efi", false, "EFI-enabled vm (Optional)")
 	flag.BoolVar(&cloud, "cloud", false, "Cloud VM (Optional)")
+	flag.BoolVar(&verbose, "v", false, "Enable verbosity")
 
 }
 
@@ -163,6 +179,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Check existing container's name
+	dockerName := exec.Command("docker", "inspect", name).Run()
+	if dockerName == nil {
+		fmt.Println("ERROR: There is a running container with the name " + name)
+		os.Exit(1)
+	}
+
 	// Perform a copy-on-write
 	// First create the VM data directory
 	UUIDcmd, _ := exec.Command("uuidgen").Output()
@@ -180,7 +203,9 @@ func main() {
 	// Create copy-on-write image
 	cowArgs := fmt.Sprintf("create -f qcow2 -o backing_file=%v temp.img", imageFile)
 	splittedCowArgs := strings.Split(cowArgs, " ")
-	//fmt.Println(splittedCowArgs)
+	if verbose {
+		fmt.Println(splittedCowArgs)
+	}
 	err = exec.Command("qemu-img", splittedCowArgs...).Run()
 	if err != nil {
 		fmt.Println("Unable to create the cow image")
@@ -206,5 +231,5 @@ func main() {
 		genCiData()
 	}
 	startVM()
-
+	showInfo()
 }
