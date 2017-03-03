@@ -81,7 +81,6 @@ func getHostOpts(s VMSyze) (opts HostOpts) {
 }
 
 func startVM() {
-	fmt.Println("Starting VM " + name)
 	// Docker arguments
 	command := fmt.Sprintf("run --name %v -td --privileged ", name)
 	command += fmt.Sprintf("-v %v:%v ", imageFile, imageFile)
@@ -128,7 +127,7 @@ func showInfo() {
 		fmt.Println(err)
 	}
 	vmIP := string(vmIPCommand)
-	fmt.Println("[" + name + "]" + " info:\n" + "  VM IP: " + vmIP)
+	fmt.Println("[" + name + "]" + " info:\n" + "IP " + vmIP)
 }
 
 func genCiData() {
