@@ -45,6 +45,7 @@ var cloud bool
 var workdir string
 var vmDir string
 var verbose bool
+var resize int
 
 func vmxSupport() bool {
 	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run()
@@ -142,6 +143,17 @@ func genCiData() {
 	}
 }
 
+func resizeImage() {
+	command_args := fmt.Sprintf("resize %v +%vG", imageFile, resize)
+	sc := strings.Split(command_args, " ")
+	err := exec.Command("qemu-img", sc...).Run()
+	if err != nil {
+		fmt.Println("Failed to resize image")
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
 func init() {
 	flag.StringVar(&imageFile, "image", "image.qcow2", "qcow2 image file path")
 	flag.StringVar(&name, "name", "", "VM's name")
@@ -151,7 +163,7 @@ func init() {
 	flag.BoolVar(&efi, "efi", false, "EFI-enabled vm (Optional)")
 	flag.BoolVar(&cloud, "cloud", false, "Cloud VM (Optional)")
 	flag.BoolVar(&verbose, "v", false, "Enable verbosity")
-
+	flag.IntVar(&resize, "resize", 0, "Resize value in GB (Only for QCOW Images).")
 }
 
 func main() {
@@ -184,6 +196,11 @@ func main() {
 	if dockerName == nil {
 		fmt.Println("ERROR: There is a running container with the name " + name)
 		os.Exit(1)
+	}
+
+	// Resize Image
+	if resize != 0 {
+		resizeImage()
 	}
 
 	// Perform a copy-on-write
