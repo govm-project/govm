@@ -17,10 +17,10 @@ if [ -z $is_gobin_in_path ]; then
 fi
 
 # Setup
-go get -v -u github.com/obedmr/govm
+go get -v -u github.com/verbacious/govm
 sudo mkdir -p /var/lib/govm/data
 sudo mkdir -p /var/lib/govm/images
-sudo cp -r $GOPATH/src/github.com/obedmr/govm/cloud-init/ /var/lib/govm
+sudo cp -r $GOPATH/src/github.com/verbacious/govm/cloud-init/ /var/lib/govm
 
 # Add public key to cloud-init files
 publicKey=$(cat ~/.ssh/id_rsa.pub)

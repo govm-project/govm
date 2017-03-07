@@ -19,13 +19,13 @@ Getting Started
 Get the project
 ---------------
 ```
-go get -v -u github.com/obedmr/govm
+go get -v -u github.com/verbacious/govm
 ```
 
 Setup ``govm`` data directories
 ----------------------------------
 ```
-$GOPATH/src/github.com/obedmr/govm/setup.sh
+$GOPATH/src/github.com/verbacious/govm/setup.sh
 ```
 
 Launch your first VM (Ubuntu 16.04 cloud image)
@@ -40,7 +40,7 @@ sudo -E govm --image ./xenial-server-cloudimg-amd64-disk1.img --name ubuntu16.04
 **Output**
 ```
 [create -f qcow2 -o backing_file=/tmp/xenial-server-cloudimg-amd64-disk1.img temp.img]
-[run --name ubuntu16.04 -td --privileged -v /tmp/xenial-server-cloudimg-amd64-disk1.img:/tmp/xenial-server-cloudimg-amd64-disk1.img -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/ubuntu16.04.img:/image/image -e AUTO_ATTACH=yes -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752:/var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752 -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/cidata.iso:/cidata.iso obedmr/govm -vnc unix:/var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/vnc -drive file=/cidata.iso,if=virtio --enable-kvm -m 4096 -smp cpus=4,cores=2,threads=2 -cpu host]
+[run --name ubuntu16.04 -td --privileged -v /tmp/xenial-server-cloudimg-amd64-disk1.img:/tmp/xenial-server-cloudimg-amd64-disk1.img -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/ubuntu16.04.img:/image/image -e AUTO_ATTACH=yes -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752:/var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752 -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/cidata.iso:/cidata.iso verbacious/govm -vnc unix:/var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/vnc -drive file=/cidata.iso,if=virtio --enable-kvm -m 4096 -smp cpus=4,cores=2,threads=2 -cpu host]
 [ubuntu16.04] info:
 IP 172.17.0.2
 ```

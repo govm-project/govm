@@ -91,7 +91,7 @@ func startVM() {
 	}
 
 	// Qemu arguments, passed to the container.
-	command += fmt.Sprintf("obedmr/govm -vnc unix:%v/vnc ", vmDir)
+	command += fmt.Sprintf("verbacious/govm -vnc unix:%v/vnc ", vmDir)
 	if efi {
 		command += "-bios /OVMF.fd "
 	}
