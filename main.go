@@ -112,7 +112,7 @@ func startVM() {
 	}
 	err := exec.Command("docker", splitted_command...).Run()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Error on docker command: %v", err)
 		os.Exit(1)
 	}
 
