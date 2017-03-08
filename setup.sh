@@ -1,5 +1,8 @@
 #!/bin/bash
 
+workdir=~/govm
+publicKey=$(cat ~/.ssh/id_rsa.pub)
+
 # Environment checks
 if [ -z $GOPATH ]; then
 	echo "GOPATH is not set"
@@ -17,12 +20,10 @@ if [ -z $is_gobin_in_path ]; then
 fi
 
 # Setup
-go get -v -u github.com/verbacious/govm
-sudo mkdir -p /var/lib/govm/data
-sudo mkdir -p /var/lib/govm/images
-sudo cp -r $GOPATH/src/github.com/verbacious/govm/cloud-init/ /var/lib/govm
+mkdir -p $workdir/data
+mkdir $workdir/images
+cp -r $GOPATH/src/github.com/verbacious/govm/cloud-init/ $workdir
 
 # Add public key to cloud-init files
-publicKey=$(cat ~/.ssh/id_rsa.pub)
-sudo sed -i 's|YOUR-PUBLIC-KEY-GOES-HERE|'"$publicKey"'|g' /var/lib/govm/cloud-init/openstack/latest/user_data
-sudo sed -i 's|YOUR-PUBLIC-KEY-GOES-HERE|'"$publicKey"'|g' /var/lib/govm/cloud-init/openstack/latest/meta_data.json
+sed -i 's|YOUR-PUBLIC-KEY-GOES-HERE|'"$publicKey"'|g' $workdir/cloud-init/openstack/latest/user_data
+sed -i 's|YOUR-PUBLIC-KEY-GOES-HERE|'"$publicKey"'|g' $workdir/cloud-init/openstack/latest/meta_data.json

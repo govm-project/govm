@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,6 +34,16 @@ const (
 	TinyVM   VMSyze = "tinyVM"
 )
 
+type MetaData struct {
+	AvailabilityZone string            `json:"availability_zone"`
+	Hostname         string            `json:"hostname"`
+	LaunchIndex      int               `json:"launch_index"`
+	Name             string            `json:"name"`
+	Meta             map[string]string `json:"meta"`
+	PublicKey        map[string]string `json:"public_keys"`
+	UUID             string            `json:"uuid"`
+}
+
 var imageFile string
 var cowImage string
 var name string
@@ -46,6 +58,7 @@ var workdir string
 var vmDir string
 var verbose bool
 var resize int
+var userData string
 
 func vmxSupport() bool {
 	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run()
@@ -130,11 +143,33 @@ func showInfo() {
 	fmt.Println("[" + name + "]" + " info:\n" + "IP " + vmIP)
 }
 
-func genCiData() {
+func genCiData(mdfile string, name string, hostname string, pk string) {
+	// Customize meta_data.json file
+	md_file, err := ioutil.ReadFile(mdfile)
+	if err != nil {
+		fmt.Printf("File error, reading the meta_data.json file: %v\n", err)
+		os.Exit(1)
+	}
+	var md MetaData
+	err = json.Unmarshal(md_file, &md)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	md.Hostname = hostname
+	md.Name = name
+	md.PublicKey["mykey"] = pk
+	m, err := json.Marshal(&md)
+	err = ioutil.WriteFile(mdfile, m, 0666)
+	if err != nil {
+		fmt.Printf("File error: %v\n", err)
+		os.Exit(1)
+	}
+
 	// genCiData takes the directory cloud-init to generate a cloud-init iso.
 	command_args := fmt.Sprintf("--output %v/cidata.iso -volid config-2 -joliet -rock %v/cloud-init", vmDir, vmDir)
 	sc := strings.Split(command_args, " ")
-	err := exec.Command("genisoimage", sc...).Run()
+	err = exec.Command("genisoimage", sc...).Run()
 	if err != nil {
 		fmt.Println("Failed to create cidata.iso")
 		fmt.Println(err)
@@ -163,6 +198,7 @@ func init() {
 	flag.BoolVar(&cloud, "cloud", false, "Cloud VM (Optional)")
 	flag.BoolVar(&verbose, "v", false, "Enable verbosity")
 	flag.IntVar(&resize, "resize", 0, "Resize value in GB (Only for QCOW Images).")
+	flag.StringVar(&userData, "user-data", "", "User-provided user_data file")
 }
 
 func main() {
@@ -183,7 +219,8 @@ func main() {
 	}
 
 	// Test the working directory
-	workdir = "/var/lib/govm"
+	homeDir := os.Getenv("HOME")
+	workdir = homeDir + "/govm"
 	_, err = os.Stat(workdir)
 	if err != nil {
 		fmt.Println("/var/lib/govm does not exists. Run the setup.sh first!")
@@ -242,9 +279,28 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		// Check if a user_data file is provided
+		if userData != "" {
+			userData, _ = filepath.Abs(imageFile)
+			// Copy user-provided user data to the VM dir
+			cpArgs = fmt.Sprintf("-f %v %v/cloud-init/openstack/latest/user_data", userData, vmDir)
+			splittedCpArgs = strings.Split(cpArgs, " ")
+			err = exec.Command("cp", splittedCpArgs...).Run()
+			if err != nil {
+				fmt.Println("Unable to copy the user_data file")
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
 		// Generate a cloud-init iso
 		cidata, _ = filepath.Abs(vmDir + "/cidata.iso")
-		genCiData()
+		hostname := name
+		publicKey, err := ioutil.ReadFile(homeDir + "/.ssh/id_rsa.pub")
+		if err != nil {
+			fmt.Printf("File error: %v", err)
+			os.Exit(1)
+		}
+		genCiData(vmDir+"/cloud-init/openstack/latest/meta_data.json", name, hostname, string(publicKey))
 	}
 	startVM()
 	showInfo()
