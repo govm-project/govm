@@ -15,6 +15,7 @@ Getting Started
 ---------------
 -  Make sure you have the latest golang binaries(at least 1.7.4+).
 - Setup your golang environment. https://golang.org/doc/code.html#GOPATH
+- Make sure your user is added to the docker group
 
 Get the project
 ---------------
