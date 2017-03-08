@@ -281,7 +281,7 @@ func main() {
 		}
 		// Check if a user_data file is provided
 		if userData != "" {
-			userData, _ = filepath.Abs(imageFile)
+			userData, _ = filepath.Abs(userData)
 			// Copy user-provided user data to the VM dir
 			cpArgs = fmt.Sprintf("-f %v %v/cloud-init/openstack/latest/user_data", userData, vmDir)
 			splittedCpArgs = strings.Split(cpArgs, " ")
