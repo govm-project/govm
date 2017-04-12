@@ -207,14 +207,14 @@ func main() {
 	// Test if the image file exists
 	imgArg, err := os.Stat(imageFile)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(imageFile, "does not exist")
 		os.Exit(1)
 	}
 
 	// Test if the image is valid or has a valid path
 	mode := imgArg.Mode()
 	if !mode.IsRegular() {
-		fmt.Println("The image file provided is not valid")
+		fmt.Println(imageFile, "is not a regular file")
 		os.Exit(1)
 	}
 
@@ -223,14 +223,15 @@ func main() {
 	workdir = homeDir + "/govm"
 	_, err = os.Stat(workdir)
 	if err != nil {
-		fmt.Println("/var/lib/govm does not exists. Run the setup.sh first!")
+		fmt.Println(workdir, "does not exists")
+		fmt.Printf("Run the setup.sh first or try:\n\n\tmkdir -p %s\n", workdir)
 		os.Exit(1)
 	}
 
 	// Check existing container's name
 	dockerName := exec.Command("docker", "inspect", name).Run()
 	if dockerName == nil {
-		fmt.Println("ERROR: There is a running container with the name " + name)
+		fmt.Printf("There is a %s container already running", name)
 		os.Exit(1)
 	}
 
