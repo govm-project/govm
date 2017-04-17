@@ -307,14 +307,14 @@ func main() {
 		os.Exit(1)
 	}
 	cowImage = vmDir + "/" + name + ".img"
-	output, err = exec.Command("mv", "temp.img", cowImage).Run()
+	err = exec.Command("mv", "temp.img", cowImage).Run()
 
 	// Handle cloud argument argument
 	if cloud {
 		// Copy cloud-init directory to vmDir
 		cpArgs := fmt.Sprintf("-r %v/cloud-init %v", wdir, vmDir)
 		splittedCpArgs := strings.Split(cpArgs, " ")
-		output, err := exec.Command("cp", splittedCpArgs...).CombinedOutput()
+		err := exec.Command("cp", splittedCpArgs...).Run()
 		if err != nil {
 			fmt.Println("Unable to copy cloud-init directory")
 			fmt.Println(err)
