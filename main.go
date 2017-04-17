@@ -25,6 +25,12 @@ const (
 	TinyNoVmx   HostOpts = "-cpu Haswell -m 512"
 )
 
+const (
+	WORKDIR   = "$HOME/govm"
+	SSHPUBKEY = "$HOME/.ssh/id_rsa.pub"
+	IMAGE     = "$PWD/image.qcow2"
+)
+
 type VMSyze string
 
 const (
@@ -44,7 +50,7 @@ type MetaData struct {
 	UUID             string            `json:"uuid"`
 }
 
-var imageFile string
+var image string
 var cowImage string
 var name string
 var small bool
@@ -59,6 +65,7 @@ var vmDir string
 var verbose bool
 var resize int
 var userData string
+var sshKeyPath string
 
 func vmxSupport() bool {
 	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run()
@@ -96,7 +103,7 @@ func getHostOpts(s VMSyze) (opts HostOpts) {
 func startVM() {
 	// Docker arguments
 	command := fmt.Sprintf("run --name %v -td --privileged ", name)
-	command += fmt.Sprintf("-v %v:%v ", imageFile, imageFile)
+	command += fmt.Sprintf("-v %v:%v ", image, image)
 	command += fmt.Sprintf("-v %v/%v.img:/image/image -e AUTO_ATTACH=yes ", vmDir, name)
 	command += fmt.Sprintf("-v %v:%v ", vmDir, vmDir)
 	if cloud {
@@ -178,7 +185,10 @@ func genCiData(mdfile string, name string, hostname string, pk string) {
 }
 
 func resizeImage() {
-	command_args := fmt.Sprintf("resize %v +%vG", imageFile, resize)
+	if verbose {
+		fmt.Printf("resizing %v +%vG\n", image, resize)
+	}
+	command_args := fmt.Sprintf("resize %v +%vG", image, resize)
 	sc := strings.Split(command_args, " ")
 	err := exec.Command("qemu-img", sc...).Run()
 	if err != nil {
@@ -188,8 +198,30 @@ func resizeImage() {
 	}
 }
 
+func saneImage(path string) error {
+
+	// Test if the image file exists
+	imgArg, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("%v does not exist", path)
+	}
+
+	// Test if the image is valid or has a valid path
+	mode := imgArg.Mode()
+	if !mode.IsRegular() {
+		return fmt.Errorf("%v is not a regular file", path)
+	}
+	return nil
+}
+
+func prepare() error {
+	return nil
+}
+
 func init() {
-	flag.StringVar(&imageFile, "image", "image.qcow2", "qcow2 image file path")
+	flag.StringVar(&workdir, "workdir", WORKDIR, "govm working directory")
+	flag.StringVar(&sshKeyPath, "pubkey", SSHPUBKEY, "Public SSH key for VM management")
+	flag.StringVar(&image, "image", "image.qcow2", "qcow2 image file path")
 	flag.StringVar(&name, "name", "", "VM's name")
 	flag.BoolVar(&tiny, "tiny", false, "Tiny VM flavor (512MB ram, cpus=1,cores=1,threads=1)")
 	flag.BoolVar(&small, "small", false, "Small VM flavor (2G ram, cpus=4,cores=2,threads=2)")
@@ -202,29 +234,37 @@ func init() {
 }
 
 func main() {
+
 	flag.Parse()
-	imageFile, _ = filepath.Abs(imageFile)
-	// Test if the image file exists
-	imgArg, err := os.Stat(imageFile)
+
+	home := os.Getenv("HOME")
+	if home == "" {
+		fmt.Printf("\nUnable to determine $HOME\n")
+		fmt.Printf("Please specify -workdir and -pubkey\n")
+		flag.Usage()
+		os.Exit(1)
+	}
+	wdir := strings.Replace(WORKDIR, "$HOME", home, 1)
+	keyPath := strings.Replace(SSHPUBKEY, "$HOME", home, 1)
+
+	image, err := filepath.Abs(image)
 	if err != nil {
-		fmt.Println(imageFile, "does not exist")
+		fmt.Printf("Unable to determine image location: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Test if the image is valid or has a valid path
-	mode := imgArg.Mode()
-	if !mode.IsRegular() {
-		fmt.Println(imageFile, "is not a regular file")
+	err = saneImage(image)
+	if err != nil {
+		fmt.Printf("%v\n", err)
 		os.Exit(1)
 	}
 
-	// Test the working directory
-	homeDir := os.Getenv("HOME")
-	workdir = homeDir + "/govm"
-	_, err = os.Stat(workdir)
+	// Check sane working directory
+	wdir, _ = filepath.Abs(wdir)
+	_, err = os.Stat(wdir)
 	if err != nil {
-		fmt.Println(workdir, "does not exists")
-		fmt.Printf("Run the setup.sh first or try:\n\n\tmkdir -p %s\n", workdir)
+		fmt.Printf(" %v does not exists\n", wdir)
+		fmt.Printf("Run the setup.sh first or try:\n\n\tmkdir -p %s\n", wdir)
 		os.Exit(1)
 	}
 
@@ -242,9 +282,9 @@ func main() {
 
 	// Perform a copy-on-write
 	// First create the VM data directory
-	UUIDcmd, _ := exec.Command("uuidgen").Output()
+	UUIDcmd, err := exec.Command("uuidgen").Output()
 	vmUUID := strings.TrimSpace(string(UUIDcmd))
-	vmDir = workdir + "/data" + "/" + name + "/" + vmUUID
+	vmDir = wdir + "/data" + "/" + name + "/" + vmUUID
 	_, err = os.Stat(vmDir)
 	if err != nil {
 		err = os.MkdirAll(vmDir, 0777)
@@ -255,7 +295,7 @@ func main() {
 		}
 	}
 	// Create copy-on-write image
-	cowArgs := fmt.Sprintf("create -f qcow2 -o backing_file=%v temp.img", imageFile)
+	cowArgs := fmt.Sprintf("create -f qcow2 -o backing_file=%v temp.img", image)
 	splittedCowArgs := strings.Split(cowArgs, " ")
 	if verbose {
 		fmt.Println(splittedCowArgs)
@@ -267,14 +307,14 @@ func main() {
 		os.Exit(1)
 	}
 	cowImage = vmDir + "/" + name + ".img"
-	err = exec.Command("mv", "temp.img", cowImage).Run()
+	output, err = exec.Command("mv", "temp.img", cowImage).Run()
 
 	// Handle cloud argument argument
 	if cloud {
 		// Copy cloud-init directory to vmDir
-		cpArgs := fmt.Sprintf("-r %v/cloud-init %v", workdir, vmDir)
+		cpArgs := fmt.Sprintf("-r %v/cloud-init %v", wdir, vmDir)
 		splittedCpArgs := strings.Split(cpArgs, " ")
-		err = exec.Command("cp", splittedCpArgs...).Run()
+		output, err := exec.Command("cp", splittedCpArgs...).CombinedOutput()
 		if err != nil {
 			fmt.Println("Unable to copy cloud-init directory")
 			fmt.Println(err)
@@ -296,7 +336,7 @@ func main() {
 		// Generate a cloud-init iso
 		cidata, _ = filepath.Abs(vmDir + "/cidata.iso")
 		hostname := name
-		publicKey, err := ioutil.ReadFile(homeDir + "/.ssh/id_rsa.pub")
+		publicKey, err := ioutil.ReadFile(keyPath)
 		if err != nil {
 			fmt.Printf("File error: %v", err)
 			os.Exit(1)
