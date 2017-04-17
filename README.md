@@ -20,13 +20,13 @@ Getting Started
 Get the project
 ---------------
 ```
-go get -v -u github.com/verbacious/govm
+go get -v -u gitlab.com/verbacious/govm
 ```
 
 Setup ``govm`` data directories
 ----------------------------------
 ```
-$GOPATH/src/github.com/verbacious/govm/setup.sh
+$GOPATH/src/gitlab.com/verbacious/govm/setup.sh
 ```
 
 Launch your first VM (Ubuntu 16.04 cloud image)
