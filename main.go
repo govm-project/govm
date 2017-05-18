@@ -1,209 +1,48 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
+	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"text/tabwriter"
+
+	"github.com/codegangsta/cli"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 )
 
-type HostOpts string
-
-const (
-	LargeVmx  HostOpts = "--enable-kvm -m 8192 -smp cpus=4,cores=2,threads=2 -cpu host"
-	MediumVmx HostOpts = "--enable-kvm -m 4096 -smp cpus=4,cores=2,threads=2 -cpu host"
-	SmallVmx  HostOpts = "--enable-kvm -m 2048 -smp cpus=4,cores=2,threads=2 -cpu host"
-	TinyVmx   HostOpts = "--enable-kvm -m 512 -smp cpus=1,cores=1,threads=1 -cpu host"
-
-	LargeNoVmx  HostOpts = "-cpu Haswell -m 8192"
-	MediumNoVmx HostOpts = "-cpu Haswell -m 4096"
-	SmallNoVmx  HostOpts = "-cpu Haswell -m 2048"
-	TinyNoVmx   HostOpts = "-cpu Haswell -m 512"
-)
-
-const (
-	WORKDIR   = "$HOME/govm"
-	SSHPUBKEY = "$HOME/.ssh/id_rsa.pub"
-	IMAGE     = "$PWD/image.qcow2"
-)
-
-type VMSyze string
-
-const (
-	LargeVM  VMSyze = "largeVM"
-	MediumVM VMSyze = "mediumVM"
-	SmallVM  VMSyze = "smallVM"
-	TinyVM   VMSyze = "tinyVM"
-)
-
-type MetaData struct {
-	AvailabilityZone string            `json:"availability_zone"`
-	Hostname         string            `json:"hostname"`
-	LaunchIndex      int               `json:"launch_index"`
-	Name             string            `json:"name"`
-	Meta             map[string]string `json:"meta"`
-	PublicKey        map[string]string `json:"public_keys"`
-	UUID             string            `json:"uuid"`
-}
-
+/* cli argument variables */
+var flavor HostOpts
+var efi bool
+var cloud bool
 var image string
 var cowImage string
 var name string
-var small bool
-var large bool
-var tiny bool
-var size VMSyze = MediumVM
-var efi bool
-var cidata string // Cloud init iso for running cloud images.
-var cloud bool
-var workdir string
-var vmDir string
+var host_dns bool
+
 var verbose bool
-var resize int
 var userData string
 var sshKeyPath string
 
-func vmxSupport() bool {
-	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run()
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	return true
-}
+var wdir string
+var ParentImage string
 
-func getHostOpts(s VMSyze) (opts HostOpts) {
-	opts = MediumNoVmx
-	if vmxSupport() {
-		switch s {
-		case LargeVM:
-			opts = LargeVmx
-		case SmallVM:
-			opts = SmallVmx
-		case MediumVM:
-			opts = MediumVmx
-		case TinyVM:
-			opts = TinyVmx
-		}
-	} else {
-		switch s {
-		case LargeVM:
-			opts = LargeNoVmx
-		case SmallVM:
-			opts = SmallNoVmx
-		}
-	}
-	return opts
-}
-
-func startVM() {
-	// Docker arguments
-	command := fmt.Sprintf("run --name %v -td --privileged ", name)
-	command += fmt.Sprintf("-v %v:%v ", image, image)
-	command += fmt.Sprintf("-v %v/%v.img:/image/image -e AUTO_ATTACH=yes ", vmDir, name)
-	command += fmt.Sprintf("-v %v:%v ", vmDir, vmDir)
-	if cloud {
-		command += fmt.Sprintf("-v %v:/cidata.iso ", cidata)
-	}
-
-	// Qemu arguments, passed to the container.
-	command += fmt.Sprintf("verbacious/govm -vnc unix:%v/vnc ", vmDir)
-	if efi {
-		command += "-bios /OVMF.fd "
-	}
-	if cloud {
-		command += "-drive file=/cidata.iso,if=virtio "
-	}
-	if tiny {
-		size = TinyVM
-		command += string(getHostOpts(size))
-	} else {
-		command += string(getHostOpts(size))
-	}
-
-	// Split the string command for it's execution. See os/exec.
-	splitted_command := strings.Split(command, " ")
-	if verbose {
-		fmt.Println(splitted_command)
-	}
-	err := exec.Command("docker", splitted_command...).Run()
-	if err != nil {
-		fmt.Printf("Error on docker command: %v", err)
-		os.Exit(1)
-	}
-
-}
-
-func showInfo() {
-	vmIPArgs := fmt.Sprintf("inspect -f {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}} %v", name)
-	svmIPArgs := strings.Split(vmIPArgs, " ")
-	vmIPCommand, err := exec.Command("docker", svmIPArgs...).Output()
-	if err != nil {
-		fmt.Println("Error running docker inspect command")
-		fmt.Println(err)
-	}
-	vmIP := string(vmIPCommand)
-	fmt.Println("[" + name + "]" + " info:\n" + "IP " + vmIP)
-}
-
-func genCiData(mdfile string, name string, hostname string, pk string) {
-	// Customize meta_data.json file
-	md_file, err := ioutil.ReadFile(mdfile)
-	if err != nil {
-		fmt.Printf("File error, reading the meta_data.json file: %v\n", err)
-		os.Exit(1)
-	}
-	var md MetaData
-	err = json.Unmarshal(md_file, &md)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	md.Hostname = hostname
-	md.Name = name
-	md.PublicKey["mykey"] = pk
-	m, err := json.Marshal(&md)
-	err = ioutil.WriteFile(mdfile, m, 0666)
-	if err != nil {
-		fmt.Printf("File error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// genCiData takes the directory cloud-init to generate a cloud-init iso.
-	command_args := fmt.Sprintf("--output %v/cidata.iso -volid config-2 -joliet -rock %v/cloud-init", vmDir, vmDir)
-	sc := strings.Split(command_args, " ")
-	err = exec.Command("genisoimage", sc...).Run()
-	if err != nil {
-		fmt.Println("Failed to create cidata.iso")
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func resizeImage() {
-	if verbose {
-		fmt.Printf("resizing %v +%vG\n", image, resize)
-	}
-	command_args := fmt.Sprintf("resize %v +%vG", image, resize)
-	sc := strings.Split(command_args, " ")
-	err := exec.Command("qemu-img", sc...).Run()
-	if err != nil {
-		fmt.Println("Failed to resize image")
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
+var ws bool
+var VNC bool
 
 func saneImage(path string) error {
 
 	// Test if the image file exists
 	imgArg, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("%v does not exist", path)
+		return fmt.Errorf("Image %v does not exist", path)
 	}
 
 	// Test if the image is valid or has a valid path
@@ -218,131 +57,296 @@ func prepare() error {
 	return nil
 }
 
-func init() {
-	flag.StringVar(&workdir, "workdir", WORKDIR, "govm working directory")
-	flag.StringVar(&sshKeyPath, "pubkey", SSHPUBKEY, "Public SSH key for VM management")
-	flag.StringVar(&image, "image", "image.qcow2", "qcow2 image file path")
-	flag.StringVar(&name, "name", "", "VM's name")
-	flag.BoolVar(&tiny, "tiny", false, "Tiny VM flavor (512MB ram, cpus=1,cores=1,threads=1)")
-	flag.BoolVar(&small, "small", false, "Small VM flavor (2G ram, cpus=4,cores=2,threads=2)")
-	flag.BoolVar(&large, "large", false, "Small VM flavor (8G ram, cpus=8,cores=4,threads=4)")
-	flag.BoolVar(&efi, "efi", false, "EFI-enabled vm (Optional)")
-	flag.BoolVar(&cloud, "cloud", false, "Cloud VM (Optional)")
-	flag.BoolVar(&verbose, "v", false, "Enable verbosity")
-	flag.IntVar(&resize, "resize", 0, "Resize value in GB (Only for QCOW Images).")
-	flag.StringVar(&userData, "user-data", "", "User-provided user_data file")
-}
-
 func main() {
 
-	flag.Parse()
-
+	/* Check environment */
 	home := os.Getenv("HOME")
 	if home == "" {
 		fmt.Printf("\nUnable to determine $HOME\n")
 		fmt.Printf("Please specify -workdir and -pubkey\n")
-		flag.Usage()
 		os.Exit(1)
 	}
-	wdir := strings.Replace(WORKDIR, "$HOME", home, 1)
-	keyPath := strings.Replace(SSHPUBKEY, "$HOME", home, 1)
-
-	image, err := filepath.Abs(image)
-	if err != nil {
-		fmt.Printf("Unable to determine image location: %v\n", err)
-		os.Exit(1)
-	}
-
-	err = saneImage(image)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
+	wdir = strings.Replace(WORKDIR, "$HOME", home, 1)
+	//keyPath := strings.Replace(SSHPUBKEY, "$HOME", home, 1)
 
 	// Check sane working directory
 	wdir, _ = filepath.Abs(wdir)
-	_, err = os.Stat(wdir)
+	_, err := os.Stat(wdir)
 	if err != nil {
 		fmt.Printf(" %v does not exists\n", wdir)
 		fmt.Printf("Run the setup.sh first or try:\n\n\tmkdir -p %s\n", wdir)
 		os.Exit(1)
 	}
 
-	// Check existing container's name
-	dockerName := exec.Command("docker", "inspect", name).Run()
-	if dockerName == nil {
-		fmt.Printf("There is a %s container already running", name)
-		os.Exit(1)
+	govm := govmInit()
+	govm.Run(os.Args)
+}
+
+/* Define the govm cli app */
+func govmInit() *cli.App {
+	govmcli := cli.NewApp()
+	govmcli.Name = "govm"
+	govmcli.Usage = "Virtual Machines on top of Docker containers"
+	/* Global flags */
+	govmcli.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "workdir",
+			Value: "",
+			Usage: "Alternate working directory. Default: ~/govm",
+		},
 	}
 
-	// Resize Image
-	if resize != 0 {
-		resizeImage()
+	/* govm commands */
+	govmcli.Commands = []cli.Command{
+		create(),
+		delete(),
+		list(),
 	}
+	return govmcli
+}
 
-	// Perform a copy-on-write
-	// First create the VM data directory
-	UUIDcmd, err := exec.Command("uuidgen").Output()
-	vmUUID := strings.TrimSpace(string(UUIDcmd))
-	vmDir = wdir + "/data" + "/" + name + "/" + vmUUID
-	_, err = os.Stat(vmDir)
-	if err != nil {
-		err = os.MkdirAll(vmDir, 0777)
-		if err != nil {
-			fmt.Println("Unable to create the hold dir for the cow image")
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	}
-	// Create copy-on-write image
-	cowArgs := fmt.Sprintf("create -f qcow2 -o backing_file=%v temp.img", image)
-	splittedCowArgs := strings.Split(cowArgs, " ")
-	if verbose {
-		fmt.Println(splittedCowArgs)
-	}
-	err = exec.Command("qemu-img", splittedCowArgs...).Run()
-	if err != nil {
-		fmt.Println("Unable to create the cow image")
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	cowImage = vmDir + "/" + name + ".img"
-	err = exec.Command("mv", "temp.img", cowImage).Run()
+/* COMMANDS */
+func create() cli.Command {
+	command := cli.Command{
+		Name:      "create",
+		Aliases:   []string{"c"},
+		Usage:     "Create a new govm",
+		ArgsUsage: "name",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "image",
+				Value: "",
+				Usage: "Path to image",
+			},
+			cli.StringFlag{
+				Name:  "user-data",
+				Value: "",
+				Usage: "Path to user data file",
+			},
+			cli.BoolFlag{
+				Name:  "efi",
+				Usage: "Use efi bootloader",
+			},
+			cli.BoolFlag{
+				Name:  "cloud",
+				Usage: "Create config-drive for cloud-images",
+			},
+			cli.StringFlag{
+				Name:  "flavor",
+				Usage: "VM specs descriptor",
+			},
+			// Temporal
+			cli.BoolFlag{
+				Name:  "vnc",
+				Usage: "Enable websockify through vnc",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			if c.NArg() <= 0 {
+				fmt.Println("Missing name")
 
-	// Handle cloud argument argument
-	if cloud {
-		// Copy cloud-init directory to vmDir
-		cpArgs := fmt.Sprintf("-r %v/cloud-init %v", wdir, vmDir)
-		splittedCpArgs := strings.Split(cpArgs, " ")
-		err := exec.Command("cp", splittedCpArgs...).Run()
-		if err != nil {
-			fmt.Println("Unable to copy cloud-init directory")
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		// Check if a user_data file is provided
-		if userData != "" {
-			userData, _ = filepath.Abs(userData)
-			// Copy user-provided user data to the VM dir
-			cpArgs = fmt.Sprintf("-f %v %v/cloud-init/openstack/latest/user_data", userData, vmDir)
-			splittedCpArgs = strings.Split(cpArgs, " ")
-			err = exec.Command("cp", splittedCpArgs...).Run()
-			if err != nil {
-				fmt.Println("Unable to copy the user_data file")
+			}
+
+			/* Mandatory argument */
+
+			// VM name argument
+			if c.Args().First() == "" {
+				err := errors.New("Missing VM name.\n")
 				fmt.Println(err)
+				fmt.Println("USAGE:\n govm create [command options] [name]\n")
+			}
+			name = c.Args().First()
+
+			// Check existing container's name
+			/*
+				dockerName := exec.Command("docker", "inspect", name).Run()
+				if dockerName == nil {
+					fmt.Printf("There is a %s container already running\n", name)
+					os.Exit(1)
+				}
+			*/
+			ctx := context.Background()
+			cli, err := client.NewEnvClient()
+			if err != nil {
+				panic(err)
+			}
+			_, err = cli.ContainerInspect(ctx, name)
+			if err == nil {
+				log.Fatal("There is an existing container with the same name")
+			}
+
+			/* Mandatory Flags */
+			if c.String("image") == "" {
+				fmt.Println("Missing --image argument")
 				os.Exit(1)
 			}
-		}
-		// Generate a cloud-init iso
-		cidata, _ = filepath.Abs(vmDir + "/cidata.iso")
-		hostname := name
-		publicKey, err := ioutil.ReadFile(keyPath)
-		if err != nil {
-			fmt.Printf("File error: %v", err)
-			os.Exit(1)
-		}
-		genCiData(vmDir+"/cloud-init/openstack/latest/meta_data.json", name, hostname, string(publicKey))
+			ParentImage, err := filepath.Abs(c.String("image"))
+			if err != nil {
+				fmt.Printf("Unable to determine image location: %v\n", err)
+				os.Exit(1)
+			}
+			err = saneImage(ParentImage)
+			if err != nil {
+				fmt.Printf("%v\n", err)
+				os.Exit(1)
+			}
+
+			/* Optional Flags */
+
+			// Check if user data is provided
+			if c.String("user-data") != "" {
+				userData, _ = filepath.Abs(c.String("user-data"))
+			}
+
+			// Check if any flavor is provided
+			if c.String("flavor") != "" {
+				flavor = getFlavor(c.String("flavor"))
+			} else {
+				flavor = getFlavor("")
+			}
+
+			// Check if efi flag is provided
+			if c.Bool("efi") != false {
+				efi = c.Bool("efi")
+			}
+
+			// Check if cloud flag is provided
+			if c.Bool("cloud") != false {
+				cloud = c.Bool("cloud")
+
+			}
+
+			if c.Bool("vnc") != false {
+				VNC = c.Bool("vnc")
+			}
+
+			govm := NewGoVM(name, ParentImage, flavor, cloud, efi, wdir)
+			govm.Launch()
+			govm.ShowInfo()
+			return nil
+		},
 	}
-	startVM()
-	showInfo()
+	return command
 }
+
+func delete() cli.Command {
+	command := cli.Command{
+		Name:    "delete",
+		Aliases: []string{"d"},
+		Usage:   "Delete govms",
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "all",
+				Usage: "Delete all govms",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			if c.NArg() <= 0 {
+
+				/* Mandatory argument */
+
+				// VM name argument
+				err := errors.New("Missing VM name.\n")
+				fmt.Println(err)
+				fmt.Println("USAGE:\n govm delete [command options] [name]\n")
+				os.Exit(1)
+			}
+			name = c.Args().First()
+			ctx := context.Background()
+			cli, err := client.NewEnvClient()
+			if err != nil {
+				panic(err)
+			}
+			containerJSON, err := cli.ContainerInspect(ctx, name)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			containerDataPath := containerJSON.Config.Labels["dataDir"]
+			pid, err := ioutil.ReadFile(containerDataPath + "/websockifyPid")
+			if err != nil {
+				log.Fatal(err)
+			}
+			websockifyPid, _ := strconv.Atoi(string(pid))
+			websockifyProcess, err := os.FindProcess(websockifyPid)
+			if err != nil {
+				log.Fatal(err)
+			}
+			websockifyProcess.Kill()
+
+			err = cli.ContainerRemove(ctx, name, types.ContainerRemoveOptions{false, false, true})
+			if err != nil {
+				log.Fatal(err)
+			}
+			os.RemoveAll(containerDataPath)
+
+			return nil
+		},
+	}
+	return command
+}
+
+func list() cli.Command {
+	command := cli.Command{
+		Name:    "list",
+		Aliases: []string{"ls"},
+		Usage:   "List govms",
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "all",
+				Usage: "List all images",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			//if c.NArg() > 0 {}
+			cli, err := client.NewEnvClient()
+			if err != nil {
+				panic(err)
+			}
+			listArgs := filters.NewArgs()
+			listArgs.Add("ancestor", "govm")
+			containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
+				false,
+				false,
+				true,
+				false,
+				"",
+				"",
+				0,
+				listArgs,
+			})
+			if err != nil {
+				panic(err)
+			}
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+			fmt.Fprintln(w, "ID\tID\tWEBSOCKIFY_PORT\tNAME")
+			for _, container := range containers {
+				fmt.Fprintln(w, container.ID[:10]+
+					"\t"+container.NetworkSettings.Networks["bridge"].IPAddress+
+					"\t"+container.Labels["websockifyPort"]+
+					"\t"+container.Names[0][1:])
+			}
+			w.Flush()
+
+			return nil
+		},
+	}
+	return command
+}
+
+/* WIP
+func config() cli.Command {
+	command := cli.Command{
+		Name:    "config",
+		Aliases: []string{"conf"},
+		Usage:   "Global govm configuration",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "websockify",
+				Usage: "Enable websockify",
+			},
+		},
+	}
+	return command
+}
+*/

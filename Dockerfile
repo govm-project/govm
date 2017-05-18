@@ -1,5 +1,16 @@
-FROM bbvainnotech/kvm:latest
-MAINTAINER obed.n.munoz@gmail.com
+FROM alpine:3.5
+MAINTAINER obed.n.munoz@gmail.com, erick.cardona.ruiz@gmail.com
+ENV container docker
 
+RUN apk update \
+&& apk add qemu-system-x86_64 xorriso dnsmasq net-tools bridge-utils \
+iproute2 curl bash qemu-img
+
+
+COPY startvm /usr/local/bin/startvm
+RUN chmod u+x /usr/local/bin/startvm
 RUN curl -O https://download.clearlinux.org/image/OVMF.fd -o /image/OVMF.fd
 
+VOLUME /image
+
+ENTRYPOINT ["/usr/local/bin/startvm"]
