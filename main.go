@@ -319,7 +319,7 @@ func list() cli.Command {
 				panic(err)
 			}
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-			fmt.Fprintln(w, "ID\tID\tWEBSOCKIFY_PORT\tNAME")
+			fmt.Fprintln(w, "ID\tIP\tWEBSOCKIFY_PORT\tNAME")
 			for _, container := range containers {
 				fmt.Fprintln(w, container.ID[:10]+
 					"\t"+container.NetworkSettings.Networks["bridge"].IPAddress+
