@@ -264,15 +264,14 @@ func delete() cli.Command {
 
 			containerDataPath := containerJSON.Config.Labels["dataDir"]
 			pid, err := ioutil.ReadFile(containerDataPath + "/websockifyPid")
-			if err != nil {
-				log.Fatal(err)
+			if err == nil {
+				websockifyPid, _ := strconv.Atoi(string(pid))
+				websockifyProcess, err := os.FindProcess(websockifyPid)
+				if err != nil {
+					log.Fatal(err)
+				}
+				websockifyProcess.Kill()
 			}
-			websockifyPid, _ := strconv.Atoi(string(pid))
-			websockifyProcess, err := os.FindProcess(websockifyPid)
-			if err != nil {
-				log.Fatal(err)
-			}
-			websockifyProcess.Kill()
 
 			err = cli.ContainerRemove(ctx, name, types.ContainerRemoveOptions{false, false, true})
 			if err != nil {
