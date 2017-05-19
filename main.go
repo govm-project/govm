@@ -140,6 +140,10 @@ func create() cli.Command {
 				Name:  "vnc",
 				Usage: "Enable websockify through vnc",
 			},
+			cli.StringFlag{
+				Name:  "size",
+				Usage: "Custom VM specs. --size <cores>,<threads>,<ram>",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			if c.NArg() <= 0 {
@@ -201,6 +205,8 @@ func create() cli.Command {
 			// Check if any flavor is provided
 			if c.String("flavor") != "" {
 				flavor = getFlavor(c.String("flavor"))
+			} else if c.String("size") != "" {
+				flavor = getCustomFlavor(c.String("size"))
 			} else {
 				flavor = getFlavor("")
 			}

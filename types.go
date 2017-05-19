@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"strings"
 )
 
 type HostOpts string
@@ -95,6 +96,19 @@ func getFlavor(flavor string) HostOpts {
 		size = getHostOpts(MediumVM)
 	}
 	return size
+}
+
+func getCustomFlavor(flavor string) HostOpts {
+	var opts string
+	var cflavor []string
+
+	cflavor = strings.Split(flavor, ",")
+	if vmxSupport() {
+		opts = fmt.Sprintf("--enable-kvm -smp cpus=%s,cores=%s,threads=%s -cpu host -m %s", cflavor[0], cflavor[0], cflavor[1], cflavor[2])
+	} else {
+		opts = fmt.Sprintf("-cpu Haswell -m %s", opts[2])
+	}
+	return HostOpts(opts)
 }
 
 /* helper function to find a tcp port */
