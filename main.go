@@ -146,29 +146,11 @@ func create() cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			if c.NArg() <= 0 {
-				fmt.Println("Missing name")
-
-			}
-
-			/* Mandatory argument */
-
 			// VM name argument
-			if c.Args().First() == "" {
-				err := errors.New("Missing VM name.\n")
-				fmt.Println(err)
-				fmt.Println("USAGE:\n govm create [command options] [name]\n")
+			if c.Args().First() != "" {
+				name = c.Args().First()
 			}
-			name = c.Args().First()
 
-			// Check existing container's name
-			/*
-				dockerName := exec.Command("docker", "inspect", name).Run()
-				if dockerName == nil {
-					fmt.Printf("There is a %s container already running\n", name)
-					os.Exit(1)
-				}
-			*/
 			ctx := context.Background()
 			cli, err := client.NewEnvClient()
 			if err != nil {
