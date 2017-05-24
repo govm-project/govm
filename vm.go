@@ -175,7 +175,7 @@ func (govm *GoVM) Launch() {
 
 	// Create the Container
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: "govm",
+		Image: "verbacious/govm",
 		Cmd:   qemuParams,
 		//Cmd:          []string{"top"},
 		Env: env,
