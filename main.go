@@ -291,7 +291,7 @@ func list() cli.Command {
 				panic(err)
 			}
 			listArgs := filters.NewArgs()
-			listArgs.Add("ancestor", "govm")
+			listArgs.Add("ancestor", "verbacious/govm")
 			containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 				false,
 				false,
