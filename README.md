@@ -23,7 +23,7 @@ Get the project
 mkdir -p $GOPATH/src/clrgitlab.amr.corp.intel.com/clr-cloud
 cd $GOPATH/src/clrgitlab.amr.corp.intel.com/clr-cloud
 git clone http://onmunoz@clrgitlab.amr.corp.intel.com/clr-cloud/govm.git
-go get -v clrgitlab.amr.corp.intel.com/clr-cloud/govm
+go get -v clrgitlab.amr.corp.intel.com/clr-cloud/govm/...
 ```
 
 Setup ``govm`` data directories
