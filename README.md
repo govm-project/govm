@@ -11,11 +11,11 @@ Key Features
 - Copy-on-write images
 - EFI support
 
-Getting Started
+Requirements
 ---------------
--  Make sure you have the latest golang binaries(at least 1.7.4+).
-- Setup your golang environment. https://golang.org/doc/code.html#GOPATH
-- Make sure your user is added to the docker group
+- Go 1.7+
+- Docker
+- (websockify)[https://github.com/novnc/websockify]
 
 Get the project
 ---------------
@@ -35,15 +35,12 @@ Launch your first VM (Ubuntu 16.04 cloud image)
 # Download Ubuntu 16.04 cloud image
 curl -Ok https://cloud-images.ubuntu.com/xenial/20170303.1/xenial-server-cloudimg-amd64-disk1.img
 # Launch your VM
-sudo -E govm --image ./xenial-server-cloudimg-amd64-disk1.img --name ubuntu16.04 -cloud -v
+govm --image ./xenial-server-cloudimg-amd64-disk1.img --cloud my-test
 ```
 
 **Output**
 ```
-[create -f qcow2 -o backing_file=/tmp/xenial-server-cloudimg-amd64-disk1.img temp.img]
-[run --name ubuntu16.04 -td --privileged -v /tmp/xenial-server-cloudimg-amd64-disk1.img:/tmp/xenial-server-cloudimg-amd64-disk1.img -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/ubuntu16.04.img:/image/image -e AUTO_ATTACH=yes -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752:/var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752 -v /var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/cidata.iso:/cidata.iso verbacious/govm -vnc unix:/var/lib/govm/data/ubuntu16.04/40a78af6-dae0-4d07-be96-d659f4a54752/vnc -drive file=/cidata.iso,if=virtio --enable-kvm -m 4096 -smp cpus=4,cores=2,threads=2 -cpu host]
-[ubuntu16.04] info:
-IP 172.17.0.2
+// TODO: Update output
 ```
 
 # Log into your vm
@@ -56,24 +53,25 @@ ssh cloud@172.17.0.2
 
 ```
 > govm --help
-Usage of govm:
-  -cloud
-        Cloud VM (Optional)
-  -efi
-        EFI-enabled vm (Optional)
-  -image string
-        qcow2 image file path (default "image.qcow2")
-  -large
-        Small VM flavor (8G ram, cpus=8,cores=4,threads=4)
-  -name string
-        VM's name
-  -resize int
-        Resize value in GB (Only for QCOW Images).
-  -small
-        Small VM flavor (2G ram, cpus=4,cores=2,threads=2)
-  -tiny
-        Tiny VM flavor (512MB ram, cpus=1,cores=1,threads=1)
-  -v    Enable verbosity
+NAME:
+   govm - Virtual Machines on top of Docker containers
+
+USAGE:
+   govm [global options] command [command options] [arguments...]
+
+VERSION:
+   0.0.0
+
+COMMANDS:
+     create, c  Create a new govm
+     delete, d  Delete govms
+     list, ls   List govms
+     help, h    Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --workdir value  Alternate working directory. Default: ~/govm
+   --help, -h       show help
+   --version, -v    print the version
 ```
 
 More cloud init stuff?
