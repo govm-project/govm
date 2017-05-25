@@ -13,9 +13,9 @@ import (
 	"text/tabwriter"
 
 	"github.com/codegangsta/cli"
-	"github.com/moby/moby/api/types"
-	"github.com/moby/moby/api/types/filters"
-	"github.com/moby/moby/client"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 )
 
 /* cli argument variables */
