@@ -29,7 +29,7 @@ go get -v clrgitlab.amr.corp.intel.com/clr-cloud/govm/...
 Setup ``govm`` data directories
 ----------------------------------
 ```
-$GOPATH/src/gitlab.com/verbacious/govm/setup.sh
+$GOPATH/src/clrgitlab.amr.corp.intel.com/clr-cloud/govm/setup.sh
 ```
 
 Launch your first VM (Ubuntu 16.04 cloud image)
