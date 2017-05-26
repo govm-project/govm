@@ -10,6 +10,8 @@ Key Features
 - Cloud Init support
 - Copy-on-write images
 - EFI support
+- [In-progress] Raw and Cloud-Init images support
+- [In-progress] NoVNC access (graphical interface access by web)
 
 Requirements
 ---------------
@@ -82,7 +84,12 @@ GLOBAL OPTIONS:
 More cloud init stuff?
 ----------------------
 
-If you want to boot cloud images, edit the template files under ./cloud-init/openstack/latest/ to fit your own needs and use the `-cloud` flag.
+If you want to boot cloud images, edit the template files under $HOME/govm/cloud-init/openstack/latest/ to fit your own needs and use the `-cloud` flag.
 For more information, please see the cloud-init documentation: https://cloudinit.readthedocs.io/en/latest/
 
 based on https://github.com/BBVA/kvm
+
+Questions, issues or suggestions
+--------------------------------
+
+http://clrgitlab.amr.corp.intel.com/clr-cloud/govm/issues
