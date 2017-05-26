@@ -38,17 +38,19 @@ Launch your first VM (Ubuntu 16.04 cloud image)
 # Download Ubuntu 16.04 cloud image
 curl -Ok https://cloud-images.ubuntu.com/xenial/20170303.1/xenial-server-cloudimg-amd64-disk1.img
 # Launch your VM
-govm --image ./xenial-server-cloudimg-amd64-disk1.img --cloud my-test
+govm create --image xenial-server-cloudimg-amd64-disk1.img --cloud
 ```
 
 **Output**
 ```
-// TODO: Update output
+no vnc
+[hopeful_euler]
+IP Address: 172.17.0.4
 ```
 
 # Log into your vm
 ```
-ssh cloud@172.17.0.2
+ssh ubuntu@172.17.0.4
 ```
 
 ``govm`` help
