@@ -29,13 +29,13 @@ var host_dns bool
 
 var verbose bool
 var userData string
-var sshKeyPath string
 
 var wdir string
+var keyPath string
 var ParentImage string
 
-var ws bool
 var VNC bool
+var SSHKey string
 
 func saneImage(path string) error {
 
@@ -67,7 +67,7 @@ func main() {
 		os.Exit(1)
 	}
 	wdir = strings.Replace(WORKDIR, "$HOME", home, 1)
-	//keyPath := strings.Replace(SSHPUBKEY, "$HOME", home, 1)
+	keyPath = strings.Replace(SSHPUBKEY, "$HOME", home, 1)
 
 	// Check sane working directory
 	wdir, _ = filepath.Abs(wdir)
@@ -144,6 +144,11 @@ func create() cli.Command {
 				Name:  "size",
 				Usage: "Custom VM specs. --size <cores>,<threads>,<ram>",
 			},
+			cli.StringFlag{
+				Name:  "key",
+				Value: "",
+				Usage: "SSH key to be included in a cloud image.",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			// VM name argument
@@ -206,6 +211,20 @@ func create() cli.Command {
 
 			if c.Bool("vnc") != false {
 				VNC = c.Bool("vnc")
+			}
+
+			if c.String("key") != "" {
+				key, err := ioutil.ReadFile(c.String("key"))
+				if err != nil {
+					log.Fatal(err)
+				}
+				SSHKey = string(key)
+			} else {
+				key, err := ioutil.ReadFile(keyPath)
+				if err != nil {
+					log.Fatal(err)
+				}
+				SSHKey = string(key)
 			}
 
 			govm := NewGoVM(name, ParentImage, flavor, cloud, efi, wdir)

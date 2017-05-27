@@ -21,6 +21,12 @@
 : ${COPY_ON_WRITE:='Y'}
 : ${COW_SIZE:=50}
 
+# Determine the image format
+IMG_FORMAT=$(qemu-img info /image/image | awk '/file\ format/ {print $3}')
+if [ "$IMG_FORMAT" != "qcow2" ]; then
+	COPY_ON_WRITE='N'
+fi
+
 case "$COPY_ON_WRITE" in
   [Yy1]* )
 	  KVM_BLK_OPTS="-drive if=virtio,file=/data/cow_image.qcow2,format=qcow2"
@@ -38,10 +44,7 @@ esac
 case "$CLOUD" in
 	[Yy1]*)
 		# Create a cloud-init iso
-		mkdir -p /cloud/openstack/latest/
-		cp /user_data /cloud/openstack/latest/user_data
-		cp /meta_data /cloud/openstack/latest/meta_data.json
-		xorriso -as mkisofs -R -V config-2 -o /data/cidata.iso /cloud
+		genisoimage -o /data/seed.iso -V cidata -r -J /cloud-init
 		;;
 esac
 

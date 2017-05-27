@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -108,6 +110,29 @@ func (govm *GoVM) Launch() {
 		os.Exit(1)
 	}
 
+	// Create the metadata file
+	vmMetaData := ConfigDriveMetaData{
+		"govm",
+		govm.Name,
+		"0",
+		govm.Name,
+		map[string]string{},
+		map[string]string{
+			"mykey": SSHKey,
+		},
+		"0",
+	}
+
+	vmMetaDataJSON, err := json.Marshal(vmMetaData)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile(vmDataDirectory+"/meta_data.json", vmMetaDataJSON, 0664)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Default Enviroment Variables
 	env := []string{
 		"AUTO_ATTACH=yes",
@@ -127,18 +152,18 @@ func (govm *GoVM) Launch() {
 	}
 	if cloud {
 		env = append(env, "CLOUD=yes")
-		env = append(env, "CLOUD_INIT_OPTS=-drive file=/data/cidata.iso,if=virtio,format=raw")
+		env = append(env, "CLOUD_INIT_OPTS=-drive file=/data/seed.iso,if=virtio,format=raw ")
 	}
 
 	// Default Mount binds
 	defaultMountBinds := []string{
 		fmt.Sprintf("%v:/image/image", govm.ParentImage),
 		fmt.Sprintf("%v:/data", vmDataDirectory),
-		fmt.Sprintf("%v:/meta_data", govm.Workdir+"/cloud-init/openstack/latest/meta_data.json"),
+		fmt.Sprintf("%v:/cloud-init/openstack/latest/meta_data.json", vmDataDirectory+"/meta_data.json"),
 	}
 
 	if userData != "" {
-		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/user_data", userData))
+		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/cloud-init/openstack/latest/user_data", userData))
 	}
 
 	// Create the Docker API client
