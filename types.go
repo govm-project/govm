@@ -106,7 +106,7 @@ func getCustomFlavor(flavor string) HostOpts {
 	if vmxSupport() {
 		opts = fmt.Sprintf("--enable-kvm -smp cpus=%s,cores=%s,threads=%s -cpu host -m %s", cflavor[0], cflavor[0], cflavor[1], cflavor[2])
 	} else {
-		opts = fmt.Sprintf("-cpu Haswell -m %s", opts[2])
+		opts = fmt.Sprintf("-cpu Haswell -m %v", opts[2])
 	}
 	return HostOpts(opts)
 }

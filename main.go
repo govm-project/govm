@@ -149,23 +149,13 @@ func create() cli.Command {
 				Value: "",
 				Usage: "SSH key to be included in a cloud image.",
 			},
+			cli.StringFlag{
+				Name:  "name",
+				Value: "",
+				Usage: "govm name",
+			},
 		},
 		Action: func(c *cli.Context) error {
-			// VM name argument
-			if c.Args().First() != "" {
-				name = c.Args().First()
-			}
-
-			ctx := context.Background()
-			cli, err := client.NewEnvClient()
-			if err != nil {
-				panic(err)
-			}
-			_, err = cli.ContainerInspect(ctx, name)
-			if err == nil {
-				log.Fatal("There is an existing container with the same name")
-			}
-
 			/* Mandatory Flags */
 			if c.String("image") == "" {
 				fmt.Println("Missing --image argument")
@@ -183,6 +173,19 @@ func create() cli.Command {
 			}
 
 			/* Optional Flags */
+			if c.String("name") != "" {
+				name = c.String("name")
+			}
+
+			ctx := context.Background()
+			cli, err := client.NewEnvClient()
+			if err != nil {
+				panic(err)
+			}
+			_, err = cli.ContainerInspect(ctx, name)
+			if err == nil {
+				log.Fatal("There is an existing container with the same name")
+			}
 
 			// Check if user data is provided
 			if c.String("user-data") != "" {
@@ -255,7 +258,7 @@ func delete() cli.Command {
 				// VM name argument
 				err := errors.New("Missing VM name.\n")
 				fmt.Println(err)
-				fmt.Println("USAGE:\n govm delete [command options] [name]\n")
+				fmt.Printf("USAGE:\n govm delete [command options] [name]\n")
 				os.Exit(1)
 			}
 			name = c.Args().First()

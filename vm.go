@@ -106,7 +106,7 @@ func (govm *GoVM) Launch() {
 	vmDataDirectory := govm.Workdir + "/data/" + govm.Name + "/" + uuid.New().String()
 	err := os.MkdirAll(vmDataDirectory, 0740)
 	if err != nil {
-		fmt.Println("Unable to create: %s", vmDataDirectory)
+		fmt.Printf("Unable to create: %s", vmDataDirectory)
 		os.Exit(1)
 	}
 
