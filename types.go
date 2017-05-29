@@ -38,11 +38,11 @@ const (
 )
 
 type ConfigDriveMetaData struct {
-	AvailabilityZone string `json: "availavility_zone"`
-	Hostname         string `json:"hostname"`
-	LaunchIndex      string `json:"launch_index"`
-	Name             string `json:"name"`
-	Meta             map[string]string
+	AvailabilityZone string            `json:"availavility_zone"`
+	Hostname         string            `json:"hostname"`
+	LaunchIndex      string            `json:"launch_index"`
+	Name             string            `json:"name"`
+	Meta             map[string]string `json:"meta"`
 	PublicKeys       map[string]string `json:"public_keys"`
 	UUID             string            `json:"uuid"`
 }
