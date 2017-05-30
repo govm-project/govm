@@ -18,7 +18,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var Port string
+var vncPort string
 
 type GoVM struct {
 	Name        string
@@ -193,10 +193,8 @@ func (govm *GoVM) Launch() {
 	}
 	*/
 
-	if VNC {
-		/* Get an available port */
-		Port = strconv.Itoa(findPort())
-	}
+	// Get an available port for VNC
+	vncPort = strconv.Itoa(findPort())
 
 	// Create the Container
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
@@ -205,7 +203,7 @@ func (govm *GoVM) Launch() {
 		//Cmd:          []string{"top"},
 		Env: env,
 		Labels: map[string]string{
-			"websockifyPort": Port,
+			"websockifyPort": vncPort,
 			"dataDir":        vmDataDirectory,
 		},
 		//ExposedPorts: exposedPorts,
@@ -229,10 +227,5 @@ func (govm *GoVM) Launch() {
 		fmt.Println(qemuParams)
 	}
 
-	if VNC {
-		govm.setVNC(vmDataDirectory, Port)
-
-	} else {
-		fmt.Println("no vnc")
-	}
+	govm.setVNC(vmDataDirectory, vncPort)
 }

@@ -34,7 +34,6 @@ var wdir string
 var keyPath string
 var ParentImage string
 
-var VNC bool
 var SSHKey string
 
 func saneImage(path string) error {
@@ -135,11 +134,6 @@ func create() cli.Command {
 				Name:  "flavor",
 				Usage: "VM specs descriptor",
 			},
-			// Temporal
-			cli.BoolFlag{
-				Name:  "vnc",
-				Usage: "Enable websockify through vnc",
-			},
 			cli.StringFlag{
 				Name:  "size",
 				Usage: "Custom VM specs. --size <cores>,<threads>,<ram>",
@@ -210,10 +204,6 @@ func create() cli.Command {
 			if c.Bool("cloud") != false {
 				cloud = c.Bool("cloud")
 
-			}
-
-			if c.Bool("vnc") != false {
-				VNC = c.Bool("vnc")
 			}
 
 			if c.String("key") != "" {
@@ -328,7 +318,7 @@ func list() cli.Command {
 				panic(err)
 			}
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-			fmt.Fprintln(w, "ID\tIP\tWEBSOCKIFY_PORT\tNAME")
+			fmt.Fprintln(w, "ID\tIP\tVNC_PORT\tNAME")
 			for _, container := range containers {
 				fmt.Fprintln(w, container.ID[:10]+
 					"\t"+container.NetworkSettings.Networks["bridge"].IPAddress+
