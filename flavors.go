@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os/exec"
 	"strings"
 )
@@ -22,12 +21,6 @@ const (
 	TinyNoVmx   HostOpts = "-cpu Haswell -m 512"
 )
 
-const (
-	WORKDIR   = "$HOME/govm"
-	SSHPUBKEY = "$HOME/.ssh/id_rsa.pub"
-	IMAGE     = "$PWD/image.qcow2"
-)
-
 type VMSize string
 
 const (
@@ -36,16 +29,6 @@ const (
 	SmallVM  VMSize = "smallVM"
 	TinyVM   VMSize = "tinyVM"
 )
-
-type ConfigDriveMetaData struct {
-	AvailabilityZone string            `json:"availavility_zone"`
-	Hostname         string            `json:"hostname"`
-	LaunchIndex      string            `json:"launch_index"`
-	Name             string            `json:"name"`
-	Meta             map[string]string `json:"meta"`
-	PublicKeys       map[string]string `json:"public_keys"`
-	UUID             string            `json:"uuid"`
-}
 
 func vmxSupport() bool {
 	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run()
@@ -109,19 +92,4 @@ func getCustomFlavor(flavor string) HostOpts {
 		opts = fmt.Sprintf("-cpu Haswell -m %v", opts[2])
 	}
 	return HostOpts(opts)
-}
-
-/* helper function to find a tcp port */
-func findPort() int {
-	address, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
-	if err != nil {
-		panic(err)
-	}
-
-	listen, err := net.ListenTCP("tcp", address)
-	if err != nil {
-		panic(err)
-	}
-	defer listen.Close()
-	return listen.Addr().(*net.TCPAddr).Port
 }

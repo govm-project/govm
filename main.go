@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -36,6 +37,37 @@ var keyPath string
 var ParentImage string
 
 var SSHKey string
+
+const (
+	WORKDIR   = "$HOME/govm"
+	SSHPUBKEY = "$HOME/.ssh/id_rsa.pub"
+	IMAGE     = "$PWD/image.qcow2"
+)
+
+type ConfigDriveMetaData struct {
+	AvailabilityZone string            `json:"availavility_zone"`
+	Hostname         string            `json:"hostname"`
+	LaunchIndex      string            `json:"launch_index"`
+	Name             string            `json:"name"`
+	Meta             map[string]string `json:"meta"`
+	PublicKeys       map[string]string `json:"public_keys"`
+	UUID             string            `json:"uuid"`
+}
+
+/* helper function to find a tcp port */
+func findPort() int {
+	address, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
+	if err != nil {
+		panic(err)
+	}
+
+	listen, err := net.ListenTCP("tcp", address)
+	if err != nil {
+		panic(err)
+	}
+	defer listen.Close()
+	return listen.Addr().(*net.TCPAddr).Port
+}
 
 func saneImage(path string) error {
 
