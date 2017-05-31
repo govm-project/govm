@@ -20,23 +20,12 @@ import (
 	"github.com/moby/moby/pkg/namesgenerator"
 )
 
-/* cli argument variables */
-var flavor HostOpts
+/* global variables */
 var efi bool
 var cloud bool
-var image string
-var cowImage string
-var name string
 var host_dns bool
-
-var verbose bool
-var userData string
-
-var wdir string
 var keyPath string
-var ParentImage string
-
-var SSHKey string
+var wdir string
 
 const (
 	WORKDIR   = "$HOME/govm"
@@ -183,6 +172,11 @@ func create() cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
+			var name string
+			var flavor HostOpts
+			var publicKey string
+			var userData string
+
 			/* Mandatory Flags */
 			if c.String("image") == "" {
 				fmt.Println("Missing --image argument")
@@ -246,16 +240,16 @@ func create() cli.Command {
 				if err != nil {
 					log.Fatal(err)
 				}
-				SSHKey = string(key)
+				publicKey = string(key)
 			} else {
 				key, err := ioutil.ReadFile(keyPath)
 				if err != nil {
 					log.Fatal(err)
 				}
-				SSHKey = string(key)
+				publicKey = string(key)
 			}
 
-			govm := NewGoVM(name, ParentImage, flavor, cloud, efi, wdir)
+			govm := NewGoVM(name, ParentImage, flavor, cloud, efi, wdir, publicKey, userData)
 			govm.Launch()
 			govm.ShowInfo()
 			return nil
@@ -276,6 +270,8 @@ func delete() cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
+			var name string
+
 			if c.NArg() <= 0 {
 
 				/* Mandatory argument */

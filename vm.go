@@ -23,11 +23,13 @@ type GoVM struct {
 	Cloud       bool
 	Efi         bool
 	Workdir     string
+	SSHKey      string
+	UserData    string
 
 	containerID string
 }
 
-func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir string) GoVM {
+func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir string, publicKey string, userData string) GoVM {
 	var govm GoVM
 	govm.Name = name
 	govm.Size = size
@@ -35,6 +37,8 @@ func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir s
 	govm.Cloud = cloud
 	govm.Efi = efi
 	govm.Workdir = workdir
+	govm.SSHKey = publicKey
+	govm.UserData = userData
 
 	return govm
 }
@@ -75,7 +79,7 @@ func (govm *GoVM) Launch() {
 		govm.Name,
 		map[string]string{},
 		map[string]string{
-			"mykey": SSHKey,
+			"mykey": govm.SSHKey,
 		},
 		"0",
 	}
@@ -119,8 +123,8 @@ func (govm *GoVM) Launch() {
 		fmt.Sprintf("%v:/cloud-init/openstack/latest/meta_data.json", vmDataDirectory+"/meta_data.json"),
 	}
 
-	if userData != "" {
-		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/cloud-init/openstack/latest/user_data", userData))
+	if govm.UserData != "" {
+		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/cloud-init/openstack/latest/user_data", govm.UserData))
 	}
 
 	// Create the Docker API client
@@ -169,7 +173,7 @@ func (govm *GoVM) Launch() {
 		PublishAllPorts: true,
 		Binds:           defaultMountBinds,
 		//PortBindings:    ports,
-	}, nil, name)
+	}, nil, govm.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -179,9 +183,6 @@ func (govm *GoVM) Launch() {
 	// Start the container
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
-	}
-	if verbose {
-		fmt.Println(qemuParams)
 	}
 
 	govm.setVNC(govm.Name, vncPort)
