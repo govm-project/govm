@@ -17,7 +17,6 @@ Requirements
 ---------------
 - Go 1.7+
 - Docker
-- [websockify](https://github.com/novnc/websockify)
 
 Get the project
 ---------------

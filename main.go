@@ -16,6 +16,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/moby/moby/pkg/namesgenerator"
 )
 
 /* cli argument variables */
@@ -169,6 +170,8 @@ func create() cli.Command {
 			/* Optional Flags */
 			if c.String("name") != "" {
 				name = c.String("name")
+			} else {
+				name = namesgenerator.GetRandomName(0)
 			}
 
 			ctx := context.Background()

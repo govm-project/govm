@@ -7,15 +7,11 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/google/uuid"
 )
 
 var vncPort string
@@ -57,53 +53,14 @@ func (govm *GoVM) ShowInfo() {
 
 }
 
-func (govm *GoVM) setVNC(dataDir string, port string) {
-	vncFile := dataDir + "/vnc"
-	exists := false
-
-	/* Allow others to be able to read the vnc socket */
-	for exists == false {
-		if _, err := os.Stat(vncFile); !os.IsNotExist(err) {
-			chmodString := fmt.Sprintf("chmod o+rw %s", vncFile)
-			chmodCommand := strings.Split(chmodString, " ")
-			err := exec.Command("sudo", chmodCommand...).Run()
-			if err != nil {
-
-				log.Fatal("Unable to chmod: ", err)
-			}
-			exists = true
-		} else {
-			time.Sleep(500 * time.Millisecond)
-		}
-	}
-
-	/* Launch a websockify process */
-	cmd := exec.Command("websockify", fmt.Sprintf("--unix-target=%s", vncFile), "0.0.0.0:"+port)
-	websockifyPidFile, err := os.Create(dataDir + "/websockifyPid")
-	if err != nil {
-		log.Fatal("Failed to create websockify pid file ", err)
-		log.Fatal("Failed to write websockify pid number: ", err)
-	}
-	defer websockifyPidFile.Close()
-
-	err = cmd.Start()
-	if err != nil {
-		log.Fatal("Failed to run websockify: ", err)
-	}
-
-	websockifyPid := strconv.Itoa(cmd.Process.Pid)
-	_, err = websockifyPidFile.WriteString(websockifyPid)
-	if err != nil {
-		log.Fatal(err)
-	}
-	websockifyPidFile.Sync()
+func (govm *GoVM) setVNC(govmName string, port string) {
 }
 
 func (govm *GoVM) Launch() {
 	ctx := context.Background()
 
 	// Create the data dir
-	vmDataDirectory := govm.Workdir + "/data/" + govm.Name + "/" + uuid.New().String()
+	vmDataDirectory := govm.Workdir + "/data/" + govm.Name
 	err := os.MkdirAll(vmDataDirectory, 0740)
 	if err != nil {
 		fmt.Printf("Unable to create: %s", vmDataDirectory)
@@ -227,5 +184,5 @@ func (govm *GoVM) Launch() {
 		fmt.Println(qemuParams)
 	}
 
-	govm.setVNC(vmDataDirectory, vncPort)
+	govm.setVNC(govm.Name, vncPort)
 }
