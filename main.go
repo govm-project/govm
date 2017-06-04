@@ -13,6 +13,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/codegangsta/cli"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -94,9 +96,13 @@ func main() {
 	wdir, _ = filepath.Abs(wdir)
 	_, err := os.Stat(wdir)
 	if err != nil {
+
 		fmt.Printf(" %v does not exists\n", wdir)
-		fmt.Printf("Run the setup.sh first or try:\n\n\tmkdir -p %s\n", wdir)
-		os.Exit(1)
+		fmt.Printf("Creating %s", wdir+"/data")
+		os.MkdirAll(wdir+"/data", 0755)
+		fmt.Printf("Creating %s", wdir+"/images")
+		os.Mkdir(wdir+"/images", 0755)
+
 	}
 
 	govm := govmInit()
@@ -122,6 +128,7 @@ func govmInit() *cli.App {
 		create(),
 		delete(),
 		list(),
+		compose(),
 	}
 	return govmcli
 }
@@ -358,6 +365,62 @@ func list() cli.Command {
 			}
 			w.Flush()
 
+			return nil
+		},
+	}
+	return command
+}
+
+func compose() cli.Command {
+	command := cli.Command{
+		Name:    "compose",
+		Aliases: []string{"co"},
+		Usage:   "Deploy GoVMs from yaml templates",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "f",
+				Value: "",
+				Usage: "template file",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			var template string
+			var composition Composition
+			if c.String("f") != "" {
+				template = c.String("f")
+				template, err := filepath.Abs(template)
+				if err != nil {
+					fmt.Printf("Unable to determine template file location: %v\n", err)
+					os.Exit(1)
+				}
+				// Test if the template file exists
+				templateStat, err := os.Stat(template)
+				if err != nil {
+					return fmt.Errorf("file %v does not exist", template)
+				}
+
+				// Test if the image is valid or has a valid path
+				mode := templateStat.Mode()
+				if !mode.IsRegular() {
+					return fmt.Errorf("%v is not a regular file", template)
+				}
+			} else {
+				fmt.Println("Missing template")
+				os.Exit(1)
+			}
+
+			templateFile, _ := ioutil.ReadFile(template)
+			err := yaml.Unmarshal(templateFile, &composition)
+			if err != nil {
+				fmt.Printf("yaml file error: %v\n", err)
+				os.Exit(1)
+			}
+			composition.SetUserData()
+			composition.SetWorkDir()
+			fmt.Println(composition)
+			for _, govm := range composition.GoVMs {
+				govm.Launch()
+			}
 			return nil
 		},
 	}

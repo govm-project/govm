@@ -17,16 +17,17 @@ import (
 var vncPort string
 
 type GoVM struct {
-	Name        string
-	Size        HostOpts
-	ParentImage string
-	Cloud       bool
-	Efi         bool
-	Workdir     string
-	SSHKey      string
-	UserData    string
+	Name        string   `yaml:"name"`
+	Size        HostOpts `yaml:"size"`
+	ParentImage string   `yaml:"image"`
+	Cloud       bool     `yaml:"cloud"`
+	Efi         bool     `yaml:"efi"`
+	Workdir     string   `yaml:"workdir"`
+	SSHKey      string   `yaml:"sshkey"`
+	UserData    string   `yaml:"user-data"`
 
-	containerID string
+	containerID      string
+	generateUserData bool
 }
 
 func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir string, publicKey string, userData string) GoVM {
@@ -94,6 +95,15 @@ func (govm *GoVM) Launch() {
 		log.Fatal(err)
 	}
 
+	if govm.generateUserData == true {
+		// Dump user data into a file
+		err = ioutil.WriteFile(vmDataDirectory+"/user_data", []byte(govm.UserData), 0664)
+		if err != nil {
+			log.Fatal(err)
+		}
+		govm.UserData = vmDataDirectory + "/user_data"
+	}
+
 	// Default Enviroment Variables
 	env := []string{
 		"AUTO_ATTACH=yes",
@@ -108,10 +118,10 @@ func (govm *GoVM) Launch() {
 	qemuParams := []string{
 		"-vnc unix:/data/vnc",
 	}
-	if efi {
+	if govm.Efi {
 		qemuParams = append(qemuParams, "-bios /OVMF.fd ")
 	}
-	if cloud {
+	if govm.Cloud {
 		env = append(env, "CLOUD=yes")
 		env = append(env, "CLOUD_INIT_OPTS=-drive file=/data/seed.iso,if=virtio,format=raw ")
 	}
