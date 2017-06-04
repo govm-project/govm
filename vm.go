@@ -1,25 +1,28 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/moby/moby/pkg/namesgenerator"
 )
 
 var vncPort string
 
 type GoVM struct {
 	Name        string   `yaml:"name"`
-	Size        HostOpts `yaml:"size"`
 	ParentImage string   `yaml:"image"`
+	Size        HostOpts `yaml:"size"`
 	Cloud       bool     `yaml:"cloud"`
 	Efi         bool     `yaml:"efi"`
 	Workdir     string   `yaml:"workdir"`
@@ -32,14 +35,115 @@ type GoVM struct {
 
 func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir string, publicKey string, userData string) GoVM {
 	var govm GoVM
-	govm.Name = name
-	govm.Size = size
-	govm.ParentImage = parentImage
-	govm.Cloud = cloud
-	govm.Efi = efi
-	govm.Workdir = workdir
-	govm.SSHKey = publicKey
-	govm.UserData = userData
+	var err error
+
+	if parentImage == "" {
+		fmt.Println("Missing --image argument")
+		os.Exit(1)
+	}
+	govm.ParentImage, err = filepath.Abs(parentImage)
+	if err != nil {
+		fmt.Printf("Unable to determine image location: %v\n", err)
+		os.Exit(1)
+	}
+	err = saneImage(parentImage)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+
+	/* Optional Flags */
+	if name != "" {
+		govm.Name = name
+	} else {
+		govm.Name = namesgenerator.GetRandomName(0)
+	}
+
+	ctx := context.Background()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
+	_, err = cli.ContainerInspect(ctx, name)
+	if err == nil {
+		log.Fatal("There is an existing container with the same name")
+	}
+	// Check the workdir
+	if workdir != "" {
+		govm.Workdir = workdir
+	} else {
+		govm.Workdir = wdir
+	}
+
+	// Check if user data is provided
+	if userData != "" {
+		absUserData, err := filepath.Abs(userData)
+		if err != nil {
+			fmt.Printf("Unable to determine %s user data file location: %v\n", govm, err)
+			os.Exit(1)
+		}
+		// Test if the template file exists
+		_, err = os.Stat(absUserData)
+		if err != nil {
+			//return fmt.Errorf("file %v does not exist", template)
+			// Look for a script verifying the shebang
+			var validShebang bool
+			validShebangs := []string{
+				"#cloud-config",
+				"#!/bin/sh",
+				"#!/bin/bash",
+				"#!/usr/bin/env python",
+			}
+			_, shebang, _ := bufio.ScanLines([]byte(userData), true)
+			for _, sb := range validShebangs {
+				if string(shebang) == sb {
+					validShebang = true
+				}
+			}
+			if validShebang == true {
+				govm.generateUserData = true
+				govm.UserData = userData
+			} else {
+				fmt.Println("Unable to determine the user data content")
+				os.Exit(1)
+			}
+
+		} else {
+			govm.UserData = absUserData
+		}
+	}
+
+	// Check if any flavor is provided
+	if size != "" {
+		govm.Size = getFlavor(string(size))
+	} else {
+		govm.Size = getFlavor("")
+	}
+
+	// Check if efi flag is provided
+	if efi != false {
+		govm.Efi = efi
+	}
+
+	// Check if cloud flag is provided
+	if cloud != false {
+		govm.Cloud = cloud
+
+	}
+
+	if publicKey != "" {
+		key, err := ioutil.ReadFile(publicKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+		govm.SSHKey = string(key)
+	} else {
+		key, err := ioutil.ReadFile(keyPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		govm.SSHKey = string(key)
+	}
 
 	return govm
 }
@@ -95,8 +199,8 @@ func (govm *GoVM) Launch() {
 		log.Fatal(err)
 	}
 
+	// Create the user_data file
 	if govm.generateUserData == true {
-		// Dump user data into a file
 		err = ioutil.WriteFile(vmDataDirectory+"/user_data", []byte(govm.UserData), 0664)
 		if err != nil {
 			log.Fatal(err)

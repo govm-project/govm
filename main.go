@@ -19,7 +19,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/moby/moby/pkg/namesgenerator"
 )
 
 /* global variables */
@@ -179,47 +178,22 @@ func create() cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			var name string
+			var parentImage string
 			var flavor HostOpts
-			var publicKey string
-			var userData string
 
-			/* Mandatory Flags */
 			if c.String("image") == "" {
 				fmt.Println("Missing --image argument")
 				os.Exit(1)
 			}
-			ParentImage, err := filepath.Abs(c.String("image"))
+			parentImage, err := filepath.Abs(c.String("image"))
 			if err != nil {
 				fmt.Printf("Unable to determine image location: %v\n", err)
 				os.Exit(1)
 			}
-			err = saneImage(ParentImage)
+			err = saneImage(parentImage)
 			if err != nil {
 				fmt.Printf("%v\n", err)
 				os.Exit(1)
-			}
-
-			/* Optional Flags */
-			if c.String("name") != "" {
-				name = c.String("name")
-			} else {
-				name = namesgenerator.GetRandomName(0)
-			}
-
-			ctx := context.Background()
-			cli, err := client.NewEnvClient()
-			if err != nil {
-				panic(err)
-			}
-			_, err = cli.ContainerInspect(ctx, name)
-			if err == nil {
-				log.Fatal("There is an existing container with the same name")
-			}
-
-			// Check if user data is provided
-			if c.String("user-data") != "" {
-				userData, _ = filepath.Abs(c.String("user-data"))
 			}
 
 			// Check if any flavor is provided
@@ -231,32 +205,15 @@ func create() cli.Command {
 				flavor = getFlavor("")
 			}
 
-			// Check if efi flag is provided
-			if c.Bool("efi") != false {
-				efi = c.Bool("efi")
-			}
-
-			// Check if cloud flag is provided
-			if c.Bool("cloud") != false {
-				cloud = c.Bool("cloud")
-
-			}
-
-			if c.String("key") != "" {
-				key, err := ioutil.ReadFile(c.String("key"))
-				if err != nil {
-					log.Fatal(err)
-				}
-				publicKey = string(key)
-			} else {
-				key, err := ioutil.ReadFile(keyPath)
-				if err != nil {
-					log.Fatal(err)
-				}
-				publicKey = string(key)
-			}
-
-			govm := NewGoVM(name, ParentImage, flavor, cloud, efi, wdir, publicKey, userData)
+			govm := NewGoVM(
+				c.String("name"),
+				parentImage,
+				flavor,
+				c.Bool("cloud"),
+				c.Bool("efi"),
+				c.String("workdir"),
+				c.String("key"),
+				c.String("user-data"))
 			govm.Launch()
 			govm.ShowInfo()
 			return nil
@@ -385,7 +342,7 @@ func compose() cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			var template string
-			var composition Composition
+			var govmTemplate GoVMTemplate
 			if c.String("f") != "" {
 				template = c.String("f")
 				template, err := filepath.Abs(template)
@@ -408,17 +365,15 @@ func compose() cli.Command {
 				fmt.Println("Missing template")
 				os.Exit(1)
 			}
-
 			templateFile, _ := ioutil.ReadFile(template)
-			err := yaml.Unmarshal(templateFile, &composition)
+			err := yaml.Unmarshal(templateFile, &govmTemplate)
 			if err != nil {
 				fmt.Printf("yaml file error: %v\n", err)
 				os.Exit(1)
 			}
-			composition.SetUserData()
-			composition.SetWorkDir()
-			fmt.Println(composition)
-			for _, govm := range composition.GoVMs {
+
+			finalGoVMTemplate := NewGoVMTemplate(&govmTemplate)
+			for _, govm := range finalGoVMTemplate.GoVMs {
 				govm.Launch()
 			}
 			return nil
