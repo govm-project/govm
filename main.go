@@ -419,7 +419,12 @@ func connect() cli.Command {
 				if c.String("key") != "" {
 					key, _ = filepath.Abs(c.String("key"))
 				} else {
-					key = "~/.ssh/id_rsa"
+					usr, err := user.Current()
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					key = usr.HomeDir + "/.ssh/id_rsa"
 				}
 				name = c.Args().First()
 				cli, err := client.NewEnvClient()
