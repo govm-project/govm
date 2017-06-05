@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -128,6 +129,7 @@ func govmInit() *cli.App {
 		delete(),
 		list(),
 		compose(),
+		connect(),
 	}
 	return govmcli
 }
@@ -375,6 +377,91 @@ func compose() cli.Command {
 			finalGoVMTemplate := NewGoVMTemplate(&govmTemplate)
 			for _, govm := range finalGoVMTemplate.GoVMs {
 				govm.Launch()
+			}
+			return nil
+		},
+	}
+	return command
+}
+
+func connect() cli.Command {
+	command := cli.Command{
+		Name:    "connect",
+		Aliases: []string{"conn"},
+		Usage:   "Get a shell from a GoVM",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "user",
+				Value: "",
+				Usage: "ssh login user",
+			},
+			cli.StringFlag{
+				Name:  "key",
+				Value: "",
+				Usage: "private key path (default: ~/.ssh/id_rsa)",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			var name, loginUser, key string
+			var govmID int
+			var nameFound bool = false
+			nargs := c.NArg()
+			switch {
+			case nargs == 1:
+				// Parse flags
+				if c.String("user") != "" {
+					loginUser = c.String("user")
+				} else {
+					usr, _ := user.Current()
+					loginUser = usr.Name
+				}
+
+				if c.String("key") != "" {
+					key, _ = filepath.Abs(c.String("key"))
+				} else {
+					key = "~/.ssh/id_rsa"
+				}
+				name = c.Args().First()
+				cli, err := client.NewEnvClient()
+				if err != nil {
+					panic(err)
+				}
+				listArgs := filters.NewArgs()
+				listArgs.Add("ancestor", "verbacious/govm")
+				containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
+					false,
+					false,
+					true,
+					false,
+					"",
+					"",
+					0,
+					listArgs,
+				})
+				if err != nil {
+					panic(err)
+				}
+				for id, container := range containers {
+					if container.Names[0][1:] == name {
+						nameFound = true
+						govmID = id
+					}
+				}
+				if nameFound != true {
+					fmt.Printf("Unable to find a running govm with name: %s", name)
+					os.Exit(1)
+				} else {
+					govmIP := containers[govmID].NetworkSettings.Networks["bridge"].IPAddress
+					getNewSSHConn(loginUser, govmIP, key)
+				}
+
+			case nargs == 0:
+				fmt.Println("No name provided as argument.")
+				os.Exit(1)
+
+			case nargs > 1:
+				fmt.Println("Only one argument is allowed")
+				os.Exit(1)
 			}
 			return nil
 		},
