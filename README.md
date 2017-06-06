@@ -37,7 +37,7 @@ Launch your first VM (Ubuntu 16.04 cloud image)
 -----------------------------------------------
 ```
 # Download Ubuntu 16.04 cloud image
-curl -Ok https://cloud-images.ubuntu.com/xenial/20170303.1/xenial-server-cloudimg-amd64-disk1.img
+curl -Ok https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
 # Launch your VM
 govm create --image xenial-server-cloudimg-amd64-disk1.img --cloud
 ```
