@@ -44,7 +44,7 @@ esac
 case "$CLOUD" in
 	[Yy1]*)
 		# Create a cloud-init iso
-		genisoimage -o /data/seed.iso -V cidata -r -J /cloud-init
+		genisoimage -o /data/seed.iso -V config-2 -r -J /cloud-init
 		;;
 esac
 
