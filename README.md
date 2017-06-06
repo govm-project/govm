@@ -1,5 +1,9 @@
 # govm
 
+* NOTICE *
+----------
+This project is on intensive development. If you have issues when trying to use it, please let us know, we don't want to make you cry.
+
 Introduction
 ------------
 ``govm`` is a Docker-based tool that will launch your pet VM inside docker containers. It will use Docker networking layer and will map it to your VM.
