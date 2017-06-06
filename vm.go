@@ -85,7 +85,6 @@ func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir s
 		// Test if the template file exists
 		_, err = os.Stat(absUserData)
 		if err != nil {
-			//return fmt.Errorf("file %v does not exist", template)
 			// Look for a script verifying the shebang
 			var validShebang bool
 			validShebangs := []string{
@@ -247,7 +246,7 @@ func (govm *GoVM) Launch() {
 		panic(err)
 	}
 
-	// Get the verbacious/govm image
+	// Get the govm/govm image
 
 	//_, err = cli.ImagePull(ctx, "govm", types.ImagePullOptions{})
 	//if err != nil {
@@ -275,18 +274,15 @@ func (govm *GoVM) Launch() {
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: "verbacious/govm",
 		Cmd:   qemuParams,
-		//Cmd:          []string{"top"},
-		Env: env,
+		Env:   env,
 		Labels: map[string]string{
 			"websockifyPort": vncPort,
 			"dataDir":        vmDataDirectory,
 		},
-		//ExposedPorts: exposedPorts,
 	}, &container.HostConfig{
 		Privileged:      true,
 		PublishAllPorts: true,
 		Binds:           defaultMountBinds,
-		//PortBindings:    ports,
 	}, nil, govm.Name)
 	if err != nil {
 		panic(err)
