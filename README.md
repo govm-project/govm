@@ -24,10 +24,10 @@ Requirements
 Get the project
 ---------------
 ```
-mkdir -p $GOPATH/src/clrgitlab.amr.corp.intel.com/clr-cloud
-cd $GOPATH/src/clrgitlab.amr.corp.intel.com/clr-cloud
-git clone http://onmunoz@clrgitlab.amr.corp.intel.com/clr-cloud/govm.git
-go get -v clrgitlab.amr.corp.intel.com/clr-cloud/govm/...
+mkdir -p $GOPATH/src/clrgitlab..intel.com/clr-cloud
+cd $GOPATH/src/clrgitlab..intel.com/clr-cloud
+git clone http://onmunoz@clrgitlab.intel.com/clr-cloud/govm.git
+go get -v clrgitlab.intel.com/clr-cloud/govm/...
 ```
 
 
@@ -89,4 +89,4 @@ based on https://github.com/BBVA/kvm
 Questions, issues or suggestions
 --------------------------------
 
-http://clrgitlab.amr.corp.intel.com/clr-cloud/govm/issues
+http://clrgitlab.intel.com/clr-cloud/govm/issues
