@@ -15,7 +15,6 @@ Key Features
 - Copy-on-write images
 - EFI support
 - [In-progress] Raw and Cloud-Init images support
-- [In-progress] NoVNC access (graphical interface access by web)
 
 Requirements
 ---------------
@@ -31,11 +30,6 @@ git clone http://onmunoz@clrgitlab.amr.corp.intel.com/clr-cloud/govm.git
 go get -v clrgitlab.amr.corp.intel.com/clr-cloud/govm/...
 ```
 
-Setup ``govm`` data directories
-----------------------------------
-```
-$GOPATH/src/clrgitlab.amr.corp.intel.com/clr-cloud/govm/setup.sh
-```
 
 Launch your first VM (Ubuntu 16.04 cloud image)
 -----------------------------------------------
