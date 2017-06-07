@@ -300,7 +300,7 @@ func list() cli.Command {
 				panic(err)
 			}
 			listArgs := filters.NewArgs()
-			listArgs.Add("ancestor", "verbacious/govm")
+			listArgs.Add("ancestor", "govm/govm")
 			containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 				false,
 				false,
@@ -315,12 +315,12 @@ func list() cli.Command {
 				panic(err)
 			}
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-			fmt.Fprintln(w, "ID\tIP\tVNC_PORT\tNAME")
+			fmt.Fprintln(w, "ID\t IP\t VNC_URL\t NAME")
 			for _, container := range containers {
 				fmt.Fprintln(w, container.ID[:10]+
-					"\t"+container.NetworkSettings.Networks["bridge"].IPAddress+
-					"\t"+container.Labels["websockifyPort"]+
-					"\t"+container.Names[0][1:])
+					"\t "+container.NetworkSettings.Networks["bridge"].IPAddress+
+					"\t http://localhost:"+container.Labels["websockifyPort"]+
+					"\t "+container.Names[0][1:])
 			}
 			w.Flush()
 
@@ -432,7 +432,7 @@ func connect() cli.Command {
 					panic(err)
 				}
 				listArgs := filters.NewArgs()
-				listArgs.Add("ancestor", "verbacious/govm")
+				listArgs.Add("ancestor", "govm/govm")
 				containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 					false,
 					false,

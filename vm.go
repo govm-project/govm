@@ -15,6 +15,8 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/moby/moby/pkg/namesgenerator"
+
+	"clrgitlab.amr.corp.intel.com/clr-cloud/govm/docker"
 )
 
 var vncPort string
@@ -161,7 +163,56 @@ func (govm *GoVM) ShowInfo() {
 
 }
 
-func (govm *GoVM) setVNC(govmName string, port string) {
+func (govm *GoVM) setVNC(govmName string, port string) error {
+	ctx := context.Background()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		return err
+	}
+	err = docker.PullImage(ctx, cli, "govm/govm-novnc")
+	if err != nil {
+		return err
+	}
+
+	err = docker.ContainerSearch(ctx, cli, "govm-novnc")
+	if err != nil {
+		mountBinds := []string{
+			fmt.Sprintf("%v/data:/govm", govm.Workdir)}
+
+		containerConfig := &container.Config{
+			Image:  "govm/novnc-server",
+			Cmd:    nil,
+			Env:    nil,
+			Labels: nil,
+		}
+
+		hostConfig := &container.HostConfig{
+			Privileged:      true,
+			PublishAllPorts: true,
+			NetworkMode:     "host",
+			Binds:           mountBinds,
+		}
+		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, "govm-novnc")
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+	}
+
+	execCmd := []string{"/noVNC/utils/websockify/run",
+		"--web", "/noVNC",
+		"--unix-target", "/govm/" + govmName + "/vnc",
+		port}
+
+	execConfig := types.ExecConfig{
+		Detach: true,
+		Cmd:    execCmd,
+	}
+
+	err = docker.Exec(ctx, cli, "govm-novnc", execConfig)
+
+	return err
 }
 
 func (govm *GoVM) Launch() {
@@ -246,54 +297,33 @@ func (govm *GoVM) Launch() {
 		panic(err)
 	}
 
-	// Get the govm/govm image
-
-	//_, err = cli.ImagePull(ctx, "govm", types.ImagePullOptions{})
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	/* WIP Exposed Ports
-	// Default Ports
-	var ports nat.PortMap
-	var exposedPorts nat.PortSet
-	vncPort := "5910"
-	_, ports, _ = nat.ParsePortSpecs([]string{
-		fmt.Sprintf(":%v:%v", vncPort, vncPort),
-	})
-
-	exposedPorts = map[nat.Port]struct{}{
-	      "5910/tcp": {},
+	err = docker.PullImage(ctx, cli, "govm/govm")
+	if err != nil {
+		panic(err)
 	}
-	*/
 
 	// Get an available port for VNC
 	vncPort = strconv.Itoa(findPort())
 
 	// Create the Container
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: "verbacious/govm",
+	containerConfig := &container.Config{
+		Image: "govm/govm",
 		Cmd:   qemuParams,
 		Env:   env,
 		Labels: map[string]string{
 			"websockifyPort": vncPort,
 			"dataDir":        vmDataDirectory,
 		},
-	}, &container.HostConfig{
+	}
+
+	hostConfig := &container.HostConfig{
 		Privileged:      true,
 		PublishAllPorts: true,
 		Binds:           defaultMountBinds,
-	}, nil, govm.Name)
-	if err != nil {
-		panic(err)
 	}
 
-	govm.containerID = resp.ID
-
-	// Start the container
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		panic(err)
-	}
+	// TODO - Proper error handling
+	govm.containerID, _ = docker.Run(ctx, cli, containerConfig, hostConfig, govm.Name)
 
 	govm.setVNC(govm.Name, vncPort)
 }
