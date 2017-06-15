@@ -323,7 +323,10 @@ func (govm *GoVM) Launch() {
 	}
 
 	// TODO - Proper error handling
-	govm.containerID, _ = docker.Run(ctx, cli, containerConfig, hostConfig, govm.Name)
+	govm.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig, govm.Name)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	govm.setVNC(govm.Name, vncPort)
 }
