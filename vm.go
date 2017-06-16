@@ -16,7 +16,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/moby/moby/pkg/namesgenerator"
 
-	"clrgitlab.amr.corp.intel.com/clr-cloud/govm/docker"
+	"clrgitlab.intel.com/clr-cloud/govm/docker"
 )
 
 var vncPort string
