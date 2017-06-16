@@ -24,10 +24,7 @@ Requirements
 Get the project
 ---------------
 ```
-mkdir -p $GOPATH/src/clrgitlab.intel.com/clr-cloud
-cd $GOPATH/src/clrgitlab.intel.com/clr-cloud
-git clone http://clrgitlab.intel.com/clr-cloud/govm.git
-go get -v -f -insecure clrgitlab.intel.com/clr-cloud/govm/...
+go get -v -f -u -insecure clrgitlab.intel.com/clr-cloud/govm/...
 ```
 
 
