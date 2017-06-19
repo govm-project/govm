@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -13,11 +11,10 @@ import (
 )
 
 func PullImage(ctx context.Context, cli *client.Client, imageName string) error {
-	out, err := cli.ImagePull(ctx, "alpine", types.ImagePullOptions{})
+	_, err := cli.ImagePull(ctx, "alpine", types.ImagePullOptions{})
 	if err != nil {
 		panic(err)
 	}
-	io.Copy(os.Stdout, out)
 	return err
 }
 
