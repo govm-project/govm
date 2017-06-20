@@ -14,7 +14,7 @@ Key Features
 - Cloud Init support
 - Copy-on-write images
 - EFI support
-- [In-progress] Raw and Cloud-Init images support
+- Cloud-Init and RAW images support
 
 Requirements
 ---------------
@@ -53,7 +53,6 @@ ssh ubuntu@172.17.0.4
 -------------
 
 ```
-> govm --help
 NAME:
    govm - Virtual Machines on top of Docker containers
 
@@ -64,10 +63,12 @@ VERSION:
    0.0.0
 
 COMMANDS:
-     create, c  Create a new govm
-     delete, d  Delete govms
-     list, ls   List govms
-     help, h    Shows a list of commands or help for one command
+     create, c      Create a new govm
+     delete, d      Delete govms
+     list, ls       List govms
+     compose, co    Deploy GoVMs from yaml templates
+     connect, conn  Get a shell from a GoVM
+     help, h        Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --workdir value  Alternate working directory. Default: ~/govm
