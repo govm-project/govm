@@ -170,7 +170,7 @@ func (govm *GoVM) setVNC(govmName string, port string) error {
 	if err != nil {
 		return err
 	}
-	err = docker.PullImage(ctx, cli, "govm/govm-novnc")
+	err = docker.PullImage(ctx, cli, "govm/novnc-server")
 	if err != nil {
 		return err
 	}
