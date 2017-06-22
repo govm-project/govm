@@ -1,7 +1,7 @@
 ---
 go-vms:
   - name: test
-    image: /home/user/govm/images/fedora-25-cloud.img
+    image: /home/user/vmgo/images/fedora-25-cloud.img
     cloud: true
     sshkey: ssh-rsa ...
     user-data: |

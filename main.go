@@ -30,7 +30,7 @@ var keyPath string
 var wdir string
 
 const (
-	WORKDIR   = "$HOME/govm"
+	WORKDIR   = "$HOME/vmgo"
 	SSHPUBKEY = "$HOME/.ssh/id_rsa.pub"
 	IMAGE     = "$PWD/image.qcow2"
 )
@@ -105,33 +105,33 @@ func main() {
 
 	}
 
-	govm := govmInit()
-	govm.Run(os.Args)
+	vmgo := vmgoInit()
+	vmgo.Run(os.Args)
 }
 
-/* Define the govm cli app */
-func govmInit() *cli.App {
-	govmcli := cli.NewApp()
-	govmcli.Name = "govm"
-	govmcli.Usage = "Virtual Machines on top of Docker containers"
+/* Define the vmgo cli app */
+func vmgoInit() *cli.App {
+	vmgocli := cli.NewApp()
+	vmgocli.Name = "vmgo"
+	vmgocli.Usage = "VMs as you go"
 	/* Global flags */
-	govmcli.Flags = []cli.Flag{
+	vmgocli.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "workdir",
 			Value: "",
-			Usage: "Alternate working directory. Default: ~/govm",
+			Usage: "Alternate working directory. Default: ~/vmgo",
 		},
 	}
 
-	/* govm commands */
-	govmcli.Commands = []cli.Command{
+	/* vmgo commands */
+	vmgocli.Commands = []cli.Command{
 		create(),
 		delete(),
 		list(),
 		compose(),
 		connect(),
 	}
-	return govmcli
+	return vmgocli
 }
 
 /* COMMANDS */
@@ -139,7 +139,7 @@ func create() cli.Command {
 	command := cli.Command{
 		Name:      "create",
 		Aliases:   []string{"c"},
-		Usage:     "Create a new govm",
+		Usage:     "Create a new vmgo",
 		ArgsUsage: "name",
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -176,7 +176,7 @@ func create() cli.Command {
 			cli.StringFlag{
 				Name:  "name",
 				Value: "",
-				Usage: "govm name",
+				Usage: "vmgo name",
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -207,7 +207,7 @@ func create() cli.Command {
 				flavor = getFlavor("")
 			}
 
-			govm := NewGoVM(
+			vmgo := NewVmgo(
 				c.String("name"),
 				parentImage,
 				flavor,
@@ -216,8 +216,8 @@ func create() cli.Command {
 				c.String("workdir"),
 				c.String("key"),
 				c.String("user-data"))
-			govm.Launch()
-			govm.ShowInfo()
+			vmgo.Launch()
+			vmgo.ShowInfo()
 			return nil
 		},
 	}
@@ -228,11 +228,11 @@ func delete() cli.Command {
 	command := cli.Command{
 		Name:    "delete",
 		Aliases: []string{"d"},
-		Usage:   "Delete govms",
+		Usage:   "Delete vmgos",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "all",
-				Usage: "Delete all govms",
+				Usage: "Delete all vmgos",
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -245,7 +245,7 @@ func delete() cli.Command {
 				// VM name argument
 				err := errors.New("Missing VM name.\n")
 				fmt.Println(err)
-				fmt.Printf("USAGE:\n govm delete [command options] [name]\n")
+				fmt.Printf("USAGE:\n vmgo delete [command options] [name]\n")
 				os.Exit(1)
 			}
 			name = c.Args().First()
@@ -286,7 +286,7 @@ func list() cli.Command {
 	command := cli.Command{
 		Name:    "list",
 		Aliases: []string{"ls"},
-		Usage:   "List govms",
+		Usage:   "List vmgos",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "all",
@@ -300,7 +300,7 @@ func list() cli.Command {
 				panic(err)
 			}
 			listArgs := filters.NewArgs()
-			listArgs.Add("ancestor", "govm/govm")
+			listArgs.Add("ancestor", "vmgo/vmgo")
 			containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 				false,
 				false,
@@ -334,7 +334,7 @@ func compose() cli.Command {
 	command := cli.Command{
 		Name:    "compose",
 		Aliases: []string{"co"},
-		Usage:   "Deploy GoVMs from yaml templates",
+		Usage:   "Deploy Vmgos from yaml templates",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "f",
@@ -344,7 +344,7 @@ func compose() cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			var template string
-			var govmTemplate GoVMTemplate
+			var vmgoTemplate VmgoTemplate
 			if c.String("f") != "" {
 				template = c.String("f")
 				template, err := filepath.Abs(template)
@@ -368,15 +368,15 @@ func compose() cli.Command {
 				os.Exit(1)
 			}
 			templateFile, _ := ioutil.ReadFile(template)
-			err := yaml.Unmarshal(templateFile, &govmTemplate)
+			err := yaml.Unmarshal(templateFile, &vmgoTemplate)
 			if err != nil {
 				fmt.Printf("yaml file error: %v\n", err)
 				os.Exit(1)
 			}
 
-			finalGoVMTemplate := NewGoVMTemplate(&govmTemplate)
-			for _, govm := range finalGoVMTemplate.GoVMs {
-				govm.Launch()
+			finalVmgoTemplate := NewVmgoTemplate(&vmgoTemplate)
+			for _, vmgo := range finalVmgoTemplate.Vmgos {
+				vmgo.Launch()
 			}
 			return nil
 		},
@@ -388,7 +388,7 @@ func connect() cli.Command {
 	command := cli.Command{
 		Name:    "connect",
 		Aliases: []string{"conn"},
-		Usage:   "Get a shell from a GoVM",
+		Usage:   "Get a shell from a Vmgo",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "user",
@@ -403,7 +403,7 @@ func connect() cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			var name, loginUser, key string
-			var govmID int
+			var vmgoID int
 			var nameFound bool = false
 			nargs := c.NArg()
 			switch {
@@ -432,7 +432,7 @@ func connect() cli.Command {
 					panic(err)
 				}
 				listArgs := filters.NewArgs()
-				listArgs.Add("ancestor", "govm/govm")
+				listArgs.Add("ancestor", "vmgo/vmgo")
 				containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 					false,
 					false,
@@ -449,15 +449,15 @@ func connect() cli.Command {
 				for id, container := range containers {
 					if container.Names[0][1:] == name {
 						nameFound = true
-						govmID = id
+						vmgoID = id
 					}
 				}
 				if nameFound != true {
-					fmt.Printf("Unable to find a running govm with name: %s", name)
+					fmt.Printf("Unable to find a running vmgo with name: %s", name)
 					os.Exit(1)
 				} else {
-					govmIP := containers[govmID].NetworkSettings.Networks["bridge"].IPAddress
-					getNewSSHConn(loginUser, govmIP, key)
+					vmgoIP := containers[vmgoID].NetworkSettings.Networks["bridge"].IPAddress
+					getNewSSHConn(loginUser, vmgoIP, key)
 				}
 
 			case nargs == 0:
@@ -479,7 +479,7 @@ func config() cli.Command {
 	command := cli.Command{
 		Name:    "config",
 		Aliases: []string{"conf"},
-		Usage:   "Global govm configuration",
+		Usage:   "Global vmgo configuration",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "websockify",

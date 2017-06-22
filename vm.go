@@ -16,12 +16,12 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/moby/moby/pkg/namesgenerator"
 
-	"clrgitlab.intel.com/clr-cloud/govm/docker"
+	"clrgitlab.intel.com/clr-cloud/vmgo/docker"
 )
 
 var vncPort string
 
-type GoVM struct {
+type Vmgo struct {
 	Name        string   `yaml:"name"`
 	ParentImage string   `yaml:"image"`
 	Size        HostOpts `yaml:"size"`
@@ -35,15 +35,15 @@ type GoVM struct {
 	generateUserData bool
 }
 
-func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir string, publicKey string, userData string) GoVM {
-	var govm GoVM
+func NewVmgo(name, parentImage string, size HostOpts, cloud, efi bool, workdir string, publicKey string, userData string) Vmgo {
+	var vmgo Vmgo
 	var err error
 
 	if parentImage == "" {
 		fmt.Println("Missing --image argument")
 		os.Exit(1)
 	}
-	govm.ParentImage, err = filepath.Abs(parentImage)
+	vmgo.ParentImage, err = filepath.Abs(parentImage)
 	if err != nil {
 		fmt.Printf("Unable to determine image location: %v\n", err)
 		os.Exit(1)
@@ -56,9 +56,9 @@ func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir s
 
 	/* Optional Flags */
 	if name != "" {
-		govm.Name = name
+		vmgo.Name = name
 	} else {
-		govm.Name = namesgenerator.GetRandomName(0)
+		vmgo.Name = namesgenerator.GetRandomName(0)
 	}
 
 	ctx := context.Background()
@@ -72,16 +72,16 @@ func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir s
 	}
 	// Check the workdir
 	if workdir != "" {
-		govm.Workdir = workdir
+		vmgo.Workdir = workdir
 	} else {
-		govm.Workdir = wdir
+		vmgo.Workdir = wdir
 	}
 
 	// Check if user data is provided
 	if userData != "" {
 		absUserData, err := filepath.Abs(userData)
 		if err != nil {
-			fmt.Printf("Unable to determine %s user data file location: %v\n", govm, err)
+			fmt.Printf("Unable to determine %s user data file location: %v\n", vmgo, err)
 			os.Exit(1)
 		}
 		// Test if the template file exists
@@ -102,33 +102,33 @@ func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir s
 				}
 			}
 			if validShebang == true {
-				govm.generateUserData = true
-				govm.UserData = userData
+				vmgo.generateUserData = true
+				vmgo.UserData = userData
 			} else {
 				fmt.Println("Unable to determine the user data content")
 				os.Exit(1)
 			}
 
 		} else {
-			govm.UserData = absUserData
+			vmgo.UserData = absUserData
 		}
 	}
 
 	// Check if any flavor is provided
 	if size != "" {
-		govm.Size = getFlavor(string(size))
+		vmgo.Size = getFlavor(string(size))
 	} else {
-		govm.Size = getFlavor("")
+		vmgo.Size = getFlavor("")
 	}
 
 	// Check if efi flag is provided
 	if efi != false {
-		govm.Efi = efi
+		vmgo.Efi = efi
 	}
 
 	// Check if cloud flag is provided
 	if cloud != false {
-		govm.Cloud = cloud
+		vmgo.Cloud = cloud
 
 	}
 
@@ -137,19 +137,19 @@ func NewGoVM(name, parentImage string, size HostOpts, cloud, efi bool, workdir s
 		if err != nil {
 			log.Fatal(err)
 		}
-		govm.SSHKey = string(key)
+		vmgo.SSHKey = string(key)
 	} else {
 		key, err := ioutil.ReadFile(keyPath)
 		if err != nil {
 			log.Fatal(err)
 		}
-		govm.SSHKey = string(key)
+		vmgo.SSHKey = string(key)
 	}
 
-	return govm
+	return vmgo
 }
 
-func (govm *GoVM) ShowInfo() {
+func (vmgo *Vmgo) ShowInfo() {
 	ctx := context.Background()
 
 	// Create the Docker API client
@@ -158,30 +158,30 @@ func (govm *GoVM) ShowInfo() {
 		panic(err)
 	}
 
-	containerInfo, _ := cli.ContainerInspect(ctx, govm.containerID)
+	containerInfo, _ := cli.ContainerInspect(ctx, vmgo.containerID)
 	fmt.Printf("[%s]\nIP Address: %s\n", containerInfo.Name[1:], containerInfo.NetworkSettings.DefaultNetworkSettings.IPAddress)
 
 }
 
-func (govm *GoVM) setVNC(govmName string, port string) error {
+func (vmgo *Vmgo) setVNC(vmgoName string, port string) error {
 	ctx := context.Background()
 
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		return err
 	}
-	err = docker.PullImage(ctx, cli, "govm/novnc-server")
+	err = docker.PullImage(ctx, cli, "vmgo/novnc-server")
 	if err != nil {
 		return err
 	}
 
-	err = docker.ContainerSearch(ctx, cli, "govm-novnc")
+	err = docker.ContainerSearch(ctx, cli, "vmgo-novnc")
 	if err != nil {
 		mountBinds := []string{
-			fmt.Sprintf("%v/data:/govm", govm.Workdir)}
+			fmt.Sprintf("%v/data:/vmgo", vmgo.Workdir)}
 
 		containerConfig := &container.Config{
-			Image:  "govm/novnc-server",
+			Image:  "vmgo/novnc-server",
 			Cmd:    nil,
 			Env:    nil,
 			Labels: nil,
@@ -193,7 +193,7 @@ func (govm *GoVM) setVNC(govmName string, port string) error {
 			NetworkMode:     "host",
 			Binds:           mountBinds,
 		}
-		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, "govm-novnc")
+		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, "vmgo-novnc")
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -202,7 +202,7 @@ func (govm *GoVM) setVNC(govmName string, port string) error {
 
 	execCmd := []string{"/noVNC/utils/websockify/run",
 		"--web", "/noVNC",
-		"--unix-target", "/govm/" + govmName + "/vnc",
+		"--unix-target", "/vmgo/" + vmgoName + "/vnc",
 		port}
 
 	execConfig := types.ExecConfig{
@@ -210,16 +210,16 @@ func (govm *GoVM) setVNC(govmName string, port string) error {
 		Cmd:    execCmd,
 	}
 
-	err = docker.Exec(ctx, cli, "govm-novnc", execConfig)
+	err = docker.Exec(ctx, cli, "vmgo-novnc", execConfig)
 
 	return err
 }
 
-func (govm *GoVM) Launch() {
+func (vmgo *Vmgo) Launch() {
 	ctx := context.Background()
 
 	// Create the data dir
-	vmDataDirectory := govm.Workdir + "/data/" + govm.Name
+	vmDataDirectory := vmgo.Workdir + "/data/" + vmgo.Name
 	err := os.MkdirAll(vmDataDirectory, 0740)
 	if err != nil {
 		fmt.Printf("Unable to create: %s", vmDataDirectory)
@@ -228,13 +228,13 @@ func (govm *GoVM) Launch() {
 
 	// Create the metadata file
 	vmMetaData := ConfigDriveMetaData{
-		"govm",
-		govm.Name,
+		"vmgo",
+		vmgo.Name,
 		"0",
-		govm.Name,
+		vmgo.Name,
 		map[string]string{},
 		map[string]string{
-			"mykey": govm.SSHKey,
+			"mykey": vmgo.SSHKey,
 		},
 		"0",
 	}
@@ -250,19 +250,19 @@ func (govm *GoVM) Launch() {
 	}
 
 	// Create the user_data file
-	if govm.generateUserData == true {
-		err = ioutil.WriteFile(vmDataDirectory+"/user_data", []byte(govm.UserData), 0664)
+	if vmgo.generateUserData == true {
+		err = ioutil.WriteFile(vmDataDirectory+"/user_data", []byte(vmgo.UserData), 0664)
 		if err != nil {
 			log.Fatal(err)
 		}
-		govm.UserData = vmDataDirectory + "/user_data"
+		vmgo.UserData = vmDataDirectory + "/user_data"
 	}
 
 	// Default Enviroment Variables
 	env := []string{
 		"AUTO_ATTACH=yes",
 		"DEBUG=yes",
-		fmt.Sprintf("KVM_CPU_OPTS=%v", govm.Size),
+		fmt.Sprintf("KVM_CPU_OPTS=%v", vmgo.Size),
 	}
 	if host_dns {
 		env = append(env, "ENABLE_DHCP=no")
@@ -272,23 +272,23 @@ func (govm *GoVM) Launch() {
 	qemuParams := []string{
 		"-vnc unix:/data/vnc",
 	}
-	if govm.Efi {
+	if vmgo.Efi {
 		qemuParams = append(qemuParams, "-bios /OVMF.fd ")
 	}
-	if govm.Cloud {
+	if vmgo.Cloud {
 		env = append(env, "CLOUD=yes")
 		env = append(env, "CLOUD_INIT_OPTS=-drive file=/data/seed.iso,if=virtio,format=raw ")
 	}
 
 	// Default Mount binds
 	defaultMountBinds := []string{
-		fmt.Sprintf("%v:/image/image", govm.ParentImage),
+		fmt.Sprintf("%v:/image/image", vmgo.ParentImage),
 		fmt.Sprintf("%v:/data", vmDataDirectory),
 		fmt.Sprintf("%v:/cloud-init/openstack/latest/meta_data.json", vmDataDirectory+"/meta_data.json"),
 	}
 
-	if govm.UserData != "" {
-		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/cloud-init/openstack/latest/user_data", govm.UserData))
+	if vmgo.UserData != "" {
+		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/cloud-init/openstack/latest/user_data", vmgo.UserData))
 	}
 
 	// Create the Docker API client
@@ -297,7 +297,7 @@ func (govm *GoVM) Launch() {
 		panic(err)
 	}
 
-	err = docker.PullImage(ctx, cli, "govm/govm")
+	err = docker.PullImage(ctx, cli, "vmgo/vmgo")
 	if err != nil {
 		panic(err)
 	}
@@ -307,7 +307,7 @@ func (govm *GoVM) Launch() {
 
 	// Create the Container
 	containerConfig := &container.Config{
-		Image: "govm/govm",
+		Image: "vmgo/vmgo",
 		Cmd:   qemuParams,
 		Env:   env,
 		Labels: map[string]string{
@@ -323,10 +323,10 @@ func (govm *GoVM) Launch() {
 	}
 
 	// TODO - Proper error handling
-	govm.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig, govm.Name)
+	vmgo.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig, vmgo.Name)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	govm.setVNC(govm.Name, vncPort)
+	vmgo.setVNC(vmgo.Name, vncPort)
 }
