@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
 
@@ -31,9 +32,9 @@ func Exec(ctx context.Context, cli *client.Client, containerName string,
 }
 
 func Run(ctx context.Context, cli *client.Client, containerConfig *container.Config,
-	hostConfig *container.HostConfig, name string) (string, error) {
+	hostConfig *container.HostConfig, networkConfig *network.NetworkingConfig, name string) (string, error) {
 
-	resp, err := cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, name)
+	resp, err := cli.ContainerCreate(ctx, containerConfig, hostConfig, networkConfig, name)
 	if err != nil {
 		return "", err
 	}

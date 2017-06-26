@@ -13,6 +13,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/moby/moby/pkg/namesgenerator"
 
@@ -21,21 +22,28 @@ import (
 
 var vncPort string
 
+type NetworkingOptions struct {
+	IP    string `yaml"ip"`
+	MAC   string `yaml:"mac"`
+	NetID string `yaml:"net-id"`
+}
+
 type Vmgo struct {
-	Name        string   `yaml:"name"`
-	ParentImage string   `yaml:"image"`
-	Size        HostOpts `yaml:"size"`
-	Cloud       bool     `yaml:"cloud"`
-	Efi         bool     `yaml:"efi"`
-	Workdir     string   `yaml:"workdir"`
-	SSHKey      string   `yaml:"sshkey"`
-	UserData    string   `yaml:"user-data"`
+	Name        string            `yaml:"name"`
+	ParentImage string            `yaml:"image"`
+	Size        HostOpts          `yaml:"size"`
+	Cloud       bool              `yaml:"cloud"`
+	Efi         bool              `yaml:"efi"`
+	Workdir     string            `yaml:"workdir"`
+	SSHKey      string            `yaml:"sshkey"`
+	UserData    string            `yaml:"user-data"`
+	NetOpts     NetworkingOptions `yaml:"networking"`
 
 	containerID      string
 	generateUserData bool
 }
 
-func NewVmgo(name, parentImage string, size HostOpts, cloud, efi bool, workdir string, publicKey string, userData string) Vmgo {
+func NewVmgo(name, parentImage string, size HostOpts, cloud, efi bool, workdir string, publicKey string, userData string, netOpts NetworkingOptions) Vmgo {
 	var vmgo Vmgo
 	var err error
 
@@ -146,6 +154,12 @@ func NewVmgo(name, parentImage string, size HostOpts, cloud, efi bool, workdir s
 		vmgo.SSHKey = string(key)
 	}
 
+	if netOpts != (NetworkingOptions{}) {
+		vmgo.NetOpts.IP = netOpts.IP
+		vmgo.NetOpts.MAC = netOpts.MAC
+		vmgo.NetOpts.NetID = netOpts.NetID
+	}
+
 	return vmgo
 }
 
@@ -193,7 +207,7 @@ func (vmgo *Vmgo) setVNC(vmgoName string, port string) error {
 			NetworkMode:     "host",
 			Binds:           mountBinds,
 		}
-		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, "vmgo-novnc")
+		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, &network.NetworkingConfig{}, "vmgo-novnc")
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -322,8 +336,22 @@ func (vmgo *Vmgo) Launch() {
 		Binds:           defaultMountBinds,
 	}
 
+	if vmgo.NetOpts.IP != "" {
+		containerConfig.Labels["ip"] = vmgo.NetOpts.IP
+	}
+
+	networkConfig := &network.NetworkingConfig{
+		map[string]*network.EndpointSettings{
+			vmgo.NetOpts.NetID: &network.EndpointSettings{
+				IPAddress:  vmgo.NetOpts.IP,
+				MacAddress: vmgo.NetOpts.MAC,
+				NetworkID:  vmgo.NetOpts.NetID,
+			},
+		},
+	}
+
 	// TODO - Proper error handling
-	vmgo.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig, vmgo.Name)
+	vmgo.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig, networkConfig, vmgo.Name)
 	if err != nil {
 		log.Fatal(err)
 	}

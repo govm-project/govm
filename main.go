@@ -215,7 +215,8 @@ func create() cli.Command {
 				c.Bool("efi"),
 				c.String("workdir"),
 				c.String("key"),
-				c.String("user-data"))
+				c.String("user-data"),
+				NetworkingOptions{})
 			vmgo.Launch()
 			vmgo.ShowInfo()
 			return nil
@@ -374,8 +375,8 @@ func compose() cli.Command {
 				os.Exit(1)
 			}
 
-			finalVmgoTemplate := NewVmgoTemplate(&vmgoTemplate)
-			for _, vmgo := range finalVmgoTemplate.Vmgos {
+			vmgoTemplate = NewVmgoTemplate(&vmgoTemplate)
+			for _, vmgo := range vmgoTemplate.VMs {
 				vmgo.Launch()
 			}
 			return nil
