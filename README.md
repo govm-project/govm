@@ -1,4 +1,4 @@
-# vmgo - A CLI for launching in-Containers VMs (Virtual Machines)
+# vmgo - A CLI for launching in-Container VMs (Virtual Machines)
 
 * NOTICE *
 ----------
