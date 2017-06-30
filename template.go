@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"clrgitlab.intel.com/clr-cloud/govm/docker"
+	"clrgitlab.intel.com/clr-cloud/vmgo/docker"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
