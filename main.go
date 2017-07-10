@@ -325,7 +325,8 @@ func list() cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			//if c.NArg() > 0 {}
+			var containerIP string
+
 			cli, err := client.NewEnvClient()
 			if err != nil {
 				panic(err)
@@ -348,8 +349,12 @@ func list() cli.Command {
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 			fmt.Fprintln(w, "ID\t IP\t VNC_URL\t NAME")
 			for _, container := range containers {
+				for _, net := range container.NetworkSettings.Networks {
+					containerIP = net.IPAddress
+					break
+				}
 				fmt.Fprintln(w, container.ID[:10]+
-					"\t "+container.NetworkSettings.Networks["bridge"].IPAddress+
+					"\t "+containerIP+
 					"\t http://localhost:"+container.Labels["websockifyPort"]+
 					"\t "+container.Names[0][1:])
 			}
