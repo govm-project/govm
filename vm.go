@@ -31,7 +31,7 @@ type NetworkingOptions struct {
 type Vmgo struct {
 	Name        string            `yaml:"name"`
 	ParentImage string            `yaml:"image"`
-	Size        HostOpts          `yaml:"size"`
+	Size        VMSize            `yaml:"size"`
 	Cloud       bool              `yaml:"cloud"`
 	Efi         bool              `yaml:"efi"`
 	Workdir     string            `yaml:"workdir"`
@@ -43,7 +43,7 @@ type Vmgo struct {
 	generateUserData bool
 }
 
-func NewVmgo(name, parentImage string, size HostOpts, cloud, efi bool, workdir string, publicKey string, userData string, netOpts NetworkingOptions) Vmgo {
+func NewVmgo(name, parentImage string, size VMSize, cloud, efi bool, workdir string, publicKey string, userData string, netOpts NetworkingOptions) Vmgo {
 	var vmgo Vmgo
 	var err error
 
@@ -123,10 +123,10 @@ func NewVmgo(name, parentImage string, size HostOpts, cloud, efi bool, workdir s
 	}
 
 	// Check if any flavor is provided
-	if size != "" {
-		vmgo.Size = getFlavor(string(size))
+	if size != (VMSize{}) {
+		vmgo.Size = size
 	} else {
-		vmgo.Size = getFlavor("")
+		vmgo.Size = GetVMSizeFromFlavor("")
 	}
 
 	// Check if efi flag is provided
@@ -276,7 +276,16 @@ func (vmgo *Vmgo) Launch() {
 	env := []string{
 		"AUTO_ATTACH=yes",
 		"DEBUG=yes",
-		fmt.Sprintf("KVM_CPU_OPTS=%v", vmgo.Size),
+		//fmt.Sprintf("KVM_CPU_OPTS=%v", vmgo.Size),
+		fmt.Sprintf("KVM_CPU_OPTS=-cpu %s -smp sockets=%v,cpus=%v,cores=%v,threads=%v,maxcpus=%v -m %d",
+			vmgo.Size.CpuModel,
+			vmgo.Size.Sockets,
+			vmgo.Size.Cpus,
+			vmgo.Size.Cores,
+			vmgo.Size.Threads,
+			(vmgo.Size.Sockets * vmgo.Size.Cores * vmgo.Size.Threads),
+			vmgo.Size.Ram,
+		),
 	}
 	if host_dns {
 		env = append(env, "ENABLE_DHCP=no")

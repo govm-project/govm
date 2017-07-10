@@ -165,10 +165,6 @@ func create() cli.Command {
 				Usage: "VM specs descriptor",
 			},
 			cli.StringFlag{
-				Name:  "size",
-				Usage: "Custom VM specs. --size <cores>,<threads>,<ram>",
-			},
-			cli.StringFlag{
 				Name:  "key",
 				Value: "",
 				Usage: "SSH key to be included in a cloud image.",
@@ -178,11 +174,40 @@ func create() cli.Command {
 				Value: "",
 				Usage: "vmgo name",
 			},
+			cli.StringFlag{
+				Name:  "cpumodel",
+				Value: "",
+				Usage: "Model of the virtual cpu. See: qemu-system-x86_64 -cpu help",
+			},
+			cli.IntFlag{
+				Name:  "sockets",
+				Value: 1,
+				Usage: "Number of sockets.",
+			},
+			cli.IntFlag{
+				Name:  "cpus",
+				Value: 1,
+				Usage: "Number of cpus",
+			},
+			cli.IntFlag{
+				Name:  "cores",
+				Value: 2,
+				Usage: "Number of cores",
+			},
+			cli.IntFlag{
+				Name:  "threads",
+				Value: 2,
+				Usage: "Number of threads",
+			},
+			cli.IntFlag{
+				Name:  "ram",
+				Value: 1024,
+				Usage: "Allocated RAM",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			var parentImage string
-			var flavor HostOpts
-
+			var flavor VMSize
 			if c.String("image") == "" {
 				fmt.Println("Missing --image argument")
 				os.Exit(1)
@@ -200,11 +225,16 @@ func create() cli.Command {
 
 			// Check if any flavor is provided
 			if c.String("flavor") != "" {
-				flavor = getFlavor(c.String("flavor"))
-			} else if c.String("size") != "" {
-				flavor = getCustomFlavor(c.String("size"))
+				flavor = GetVMSizeFromFlavor(c.String("flavor"))
 			} else {
-				flavor = getFlavor("")
+				flavor = NewVMSize(
+					c.String("cpumodel"),
+					c.Int("sockets"),
+					c.Int("cpus"),
+					c.Int("cores"),
+					c.Int("threads"),
+					c.Int("ram"),
+				)
 			}
 
 			vmgo := NewVmgo(
