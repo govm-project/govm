@@ -23,9 +23,10 @@ import (
 var vncPort string
 
 type NetworkingOptions struct {
-	IP    string `yaml"ip"`
-	MAC   string `yaml:"mac"`
-	NetID string `yaml:"net-id"`
+	IP    string   `yaml"ip"`
+	MAC   string   `yaml:"mac"`
+	NetID string   `yaml:"net-id"`
+	DNS   []string `yaml:"dns"`
 }
 
 type Vmgo struct {
@@ -154,11 +155,10 @@ func NewVmgo(name, parentImage string, size VMSize, cloud, efi bool, workdir str
 		vmgo.SSHKey = string(key)
 	}
 
-	if netOpts != (NetworkingOptions{}) {
-		vmgo.NetOpts.IP = netOpts.IP
-		vmgo.NetOpts.MAC = netOpts.MAC
-		vmgo.NetOpts.NetID = netOpts.NetID
-	}
+	vmgo.NetOpts.IP = netOpts.IP
+	vmgo.NetOpts.MAC = netOpts.MAC
+	vmgo.NetOpts.NetID = netOpts.NetID
+	vmgo.NetOpts.DNS = netOpts.DNS
 
 	return vmgo
 }
@@ -195,10 +195,11 @@ func (vmgo *Vmgo) setVNC(vmgoName string, port string) error {
 			fmt.Sprintf("%v/data:/vmgo", vmgo.Workdir)}
 
 		containerConfig := &container.Config{
-			Image:  "vmgo/novnc-server",
-			Cmd:    nil,
-			Env:    nil,
-			Labels: nil,
+			Image:    "vmgo/novnc-server",
+			Hostname: vmgo.Name,
+			Cmd:      nil,
+			Env:      nil,
+			Labels:   nil,
 		}
 
 		hostConfig := &container.HostConfig{
@@ -330,9 +331,10 @@ func (vmgo *Vmgo) Launch() {
 
 	// Create the Container
 	containerConfig := &container.Config{
-		Image: "vmgo/vmgo",
-		Cmd:   qemuParams,
-		Env:   env,
+		Image:    "vmgo/vmgo",
+		Hostname: vmgo.Name,
+		Cmd:      qemuParams,
+		Env:      env,
 		Labels: map[string]string{
 			"websockifyPort": vncPort,
 			"dataDir":        vmDataDirectory,
@@ -343,6 +345,7 @@ func (vmgo *Vmgo) Launch() {
 		Privileged:      true,
 		PublishAllPorts: true,
 		Binds:           defaultMountBinds,
+		DNS:             vmgo.NetOpts.DNS,
 	}
 
 	if vmgo.NetOpts.IP != "" {
