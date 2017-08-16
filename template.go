@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 
-	"clrgitlab.intel.com/clr-cloud/vmgo/docker"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/golang/glog"
+	"github.intel.com/clrgdc/govm/docker"
 )
 
 type VmgoTemplate struct {
