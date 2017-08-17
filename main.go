@@ -295,7 +295,12 @@ func delete() cli.Command {
 				websockifyProcess.Kill()
 			}
 
-			err = cli.ContainerRemove(ctx, name, types.ContainerRemoveOptions{false, false, true})
+			err = cli.ContainerRemove(ctx, name,
+				types.ContainerRemoveOptions{
+					RemoveVolumes: false,
+					RemoveLinks:   false,
+					Force:         true,
+				})
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -328,14 +333,14 @@ func list() cli.Command {
 			listArgs := filters.NewArgs()
 			listArgs.Add("ancestor", VMLauncherContainerImage)
 			containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
-				false,
-				false,
-				true,
-				false,
-				"",
-				"",
-				0,
-				listArgs,
+				Quiet:   false,
+				Size:    false,
+				All:     true,
+				Latest:  false,
+				Since:   "",
+				Before:  "",
+				Limit:   0,
+				Filters: listArgs,
 			})
 			if err != nil {
 				panic(err)
@@ -464,14 +469,14 @@ func connect() cli.Command {
 				listArgs := filters.NewArgs()
 				listArgs.Add("ancestor", VMLauncherContainerImage)
 				containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
-					false,
-					false,
-					true,
-					false,
-					"",
-					"",
-					0,
-					listArgs,
+					Quiet:   false,
+					Size:    false,
+					All:     true,
+					Latest:  false,
+					Since:   "",
+					Before:  "",
+					Limit:   0,
+					Filters: listArgs,
 				})
 				if err != nil {
 					panic(err)

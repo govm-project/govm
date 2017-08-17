@@ -20,7 +20,7 @@ func VerifyNetwork(ctx context.Context, cli *client.Client, networkName string) 
 	filters := filters.NewArgs()
 	filters.Add("name", networkName)
 	_, err := cli.NetworkList(ctx, types.NetworkListOptions{
-		filters,
+		Filters: filters,
 	})
 	if err != nil {
 		glog.Error(err)

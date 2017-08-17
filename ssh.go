@@ -37,7 +37,7 @@ func getNewSSHConn(username, hostname, key string) {
 
 	privateKeyBytes, err := ioutil.ReadFile(key)
 	if err != nil {
-		log.Fatal("Error reading private key file. %v", err)
+		log.Fatalf("Error on reading private key file: %v", err)
 	}
 
 	// Create the Signer for this private key.
