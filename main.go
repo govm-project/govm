@@ -30,7 +30,7 @@ var keyPath string
 var wdir string
 
 const (
-	WORKDIR   = "$HOME/vmgo"
+	WORKDIR   = "$HOME/vms"
 	SSHPUBKEY = "$HOME/.ssh/id_rsa.pub"
 	IMAGE     = "$PWD/image.qcow2"
 )
@@ -105,41 +105,40 @@ func main() {
 
 	}
 
-	vmgo := vmgoInit()
-	vmgo.Run(os.Args)
+	vm := vmInit()
+	vm.Run(os.Args)
 }
 
-/* Define the vmgo cli app */
-func vmgoInit() *cli.App {
-	vmgocli := cli.NewApp()
-	vmgocli.Name = "vmgo"
-	vmgocli.Usage = "VMs as you go"
+/* Define the vm cli app */
+func vmInit() *cli.App {
+	vmCLI := cli.NewApp()
+	vmCLI.Name = "govm"
+	vmCLI.Usage = "VMs as you go"
 	/* Global flags */
-	vmgocli.Flags = []cli.Flag{
+	vmCLI.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "workdir",
 			Value: "",
-			Usage: "Alternate working directory. Default: ~/vmgo",
+			Usage: "Alternate working directory. Default: ~/vms",
 		},
 	}
 
-	/* vmgo commands */
-	vmgocli.Commands = []cli.Command{
+	// sub-commands
+	vmCLI.Commands = []cli.Command{
 		create(),
 		delete(),
 		list(),
 		compose(),
 		connect(),
 	}
-	return vmgocli
+	return vmCLI
 }
 
-/* COMMANDS */
 func create() cli.Command {
 	command := cli.Command{
 		Name:      "create",
 		Aliases:   []string{"c"},
-		Usage:     "Create a new vmgo",
+		Usage:     "Create a new vm",
 		ArgsUsage: "name",
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -172,7 +171,7 @@ func create() cli.Command {
 			cli.StringFlag{
 				Name:  "name",
 				Value: "",
-				Usage: "vmgo name",
+				Usage: "vm name",
 			},
 			cli.StringFlag{
 				Name:  "cpumodel",
@@ -237,7 +236,7 @@ func create() cli.Command {
 				)
 			}
 
-			vmgo := NewVmgo(
+			vm := NewVM(
 				c.String("name"),
 				parentImage,
 				flavor,
@@ -247,8 +246,8 @@ func create() cli.Command {
 				c.String("key"),
 				c.String("user-data"),
 				NetworkingOptions{})
-			vmgo.Launch()
-			vmgo.ShowInfo()
+			vm.Launch()
+			vm.ShowInfo()
 			return nil
 		},
 	}
@@ -259,11 +258,11 @@ func delete() cli.Command {
 	command := cli.Command{
 		Name:    "delete",
 		Aliases: []string{"d"},
-		Usage:   "Delete vmgos",
+		Usage:   "Delete vms",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "all",
-				Usage: "Delete all vmgos",
+				Usage: "Delete all vms",
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -274,9 +273,9 @@ func delete() cli.Command {
 				/* Mandatory argument */
 
 				// VM name argument
-				err := errors.New("Missing VM name.\n")
+				err := errors.New("missing VM name")
 				fmt.Println(err)
-				fmt.Printf("USAGE:\n vmgo delete [command options] [name]\n")
+				fmt.Printf("USAGE:\n govm delete [command options] [name]\n")
 				os.Exit(1)
 			}
 			name = c.Args().First()
@@ -317,7 +316,7 @@ func list() cli.Command {
 	command := cli.Command{
 		Name:    "list",
 		Aliases: []string{"ls"},
-		Usage:   "List vmgos",
+		Usage:   "List vms",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "all",
@@ -332,7 +331,7 @@ func list() cli.Command {
 				panic(err)
 			}
 			listArgs := filters.NewArgs()
-			listArgs.Add("ancestor", "vmgo/vmgo")
+			listArgs.Add("ancestor", "vm/vm")
 			containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 				false,
 				false,
@@ -370,7 +369,7 @@ func compose() cli.Command {
 	command := cli.Command{
 		Name:    "compose",
 		Aliases: []string{"co"},
-		Usage:   "Deploy Vmgos from yaml templates",
+		Usage:   "Deploy Vms from yaml templates",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "f",
@@ -380,7 +379,7 @@ func compose() cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			var template string
-			var vmgoTemplate VmgoTemplate
+			var vmTemplate VMTemplate
 			if c.String("f") != "" {
 				template = c.String("f")
 				template, err := filepath.Abs(template)
@@ -404,15 +403,15 @@ func compose() cli.Command {
 				os.Exit(1)
 			}
 			templateFile, _ := ioutil.ReadFile(template)
-			err := yaml.Unmarshal(templateFile, &vmgoTemplate)
+			err := yaml.Unmarshal(templateFile, &vmTemplate)
 			if err != nil {
 				fmt.Printf("yaml file error: %v\n", err)
 				os.Exit(1)
 			}
 
-			vmgoTemplate = NewVmgoTemplate(&vmgoTemplate)
-			for _, vmgo := range vmgoTemplate.VMs {
-				vmgo.Launch()
+			vmTemplate = NewVMTemplate(&vmTemplate)
+			for _, vm := range vmTemplate.VMs {
+				vm.Launch()
 			}
 			return nil
 		},
@@ -424,7 +423,7 @@ func connect() cli.Command {
 	command := cli.Command{
 		Name:    "connect",
 		Aliases: []string{"conn"},
-		Usage:   "Get a shell from a Vmgo",
+		Usage:   "Get a shell from a vm",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "user",
@@ -439,7 +438,7 @@ func connect() cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			var name, loginUser, key string
-			var vmgoID int
+			var vmID int
 			var nameFound bool = false
 			nargs := c.NArg()
 			switch {
@@ -468,7 +467,7 @@ func connect() cli.Command {
 					panic(err)
 				}
 				listArgs := filters.NewArgs()
-				listArgs.Add("ancestor", "vmgo/vmgo")
+				listArgs.Add("ancestor", "vm/vm")
 				containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 					false,
 					false,
@@ -485,15 +484,15 @@ func connect() cli.Command {
 				for id, container := range containers {
 					if container.Names[0][1:] == name {
 						nameFound = true
-						vmgoID = id
+						vmID = id
 					}
 				}
 				if nameFound != true {
-					fmt.Printf("Unable to find a running vmgo with name: %s", name)
+					fmt.Printf("Unable to find a running vm with name: %s", name)
 					os.Exit(1)
 				} else {
-					vmgoIP := containers[vmgoID].NetworkSettings.Networks["bridge"].IPAddress
-					getNewSSHConn(loginUser, vmgoIP, key)
+					vmIP := containers[vmID].NetworkSettings.Networks["bridge"].IPAddress
+					getNewSSHConn(loginUser, vmIP, key)
 				}
 
 			case nargs == 0:
@@ -515,7 +514,7 @@ func config() cli.Command {
 	command := cli.Command{
 		Name:    "config",
 		Aliases: []string{"conf"},
-		Usage:   "Global vmgo configuration",
+		Usage:   "Global vm configuration",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "websockify",

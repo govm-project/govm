@@ -10,13 +10,15 @@ import (
 	"github.intel.com/clrgdc/govm/docker"
 )
 
-type VmgoTemplate struct {
-	VMs      []Vmgo           `yaml:"vms"`
+//VMTemplate defines a VMs orchestration template
+type VMTemplate struct {
+	VMs      []VM             `yaml:"vms"`
 	Networks []docker.Network `yaml:"networks"`
 }
 
-func NewVmgoTemplate(c *VmgoTemplate) VmgoTemplate {
-	var newVmgoTemplate VmgoTemplate
+//NewVMTemplate creates a new VMTemplate object
+func NewVMTemplate(c *VMTemplate) VMTemplate {
+	var newVMTemplate VMTemplate
 
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
@@ -26,8 +28,8 @@ func NewVmgoTemplate(c *VmgoTemplate) VmgoTemplate {
 
 	/* VMs definitions */
 	for _, vm := range c.VMs {
-		newVmgoTemplate.VMs = append(newVmgoTemplate.VMs,
-			NewVmgo(
+		newVMTemplate.VMs = append(newVMTemplate.VMs,
+			NewVM(
 				vm.Name,
 				vm.ParentImage,
 				NewVMSize(vm.Size.CpuModel,
@@ -78,5 +80,5 @@ func NewVmgoTemplate(c *VmgoTemplate) VmgoTemplate {
 		}
 	}
 
-	return newVmgoTemplate
+	return newVMTemplate
 }

@@ -22,14 +22,16 @@ import (
 
 var vncPort string
 
+//NetworkingOptions specifies network details for new VM
 type NetworkingOptions struct {
-	IP    string   `yaml"ip"`
+	IP    string   `yaml:"ip"`
 	MAC   string   `yaml:"mac"`
 	NetID string   `yaml:"net-id"`
 	DNS   []string `yaml:"dns"`
 }
 
-type Vmgo struct {
+//VM contains all VM's attributes
+type VM struct {
 	Name        string            `yaml:"name"`
 	ParentImage string            `yaml:"image"`
 	Size        VMSize            `yaml:"size"`
@@ -44,15 +46,16 @@ type Vmgo struct {
 	generateUserData bool
 }
 
-func NewVmgo(name, parentImage string, size VMSize, cloud, efi bool, workdir string, publicKey string, userData string, netOpts NetworkingOptions) Vmgo {
-	var vmgo Vmgo
+//NewVM creates a new VM object
+func NewVM(name, parentImage string, size VMSize, cloud, efi bool, workdir string, publicKey string, userData string, netOpts NetworkingOptions) VM {
+	var vm VM
 	var err error
 
 	if parentImage == "" {
 		fmt.Println("Missing --image argument")
 		os.Exit(1)
 	}
-	vmgo.ParentImage, err = filepath.Abs(parentImage)
+	vm.ParentImage, err = filepath.Abs(parentImage)
 	if err != nil {
 		fmt.Printf("Unable to determine image location: %v\n", err)
 		os.Exit(1)
@@ -63,11 +66,11 @@ func NewVmgo(name, parentImage string, size VMSize, cloud, efi bool, workdir str
 		os.Exit(1)
 	}
 
-	/* Optional Flags */
+	// Optional Flags
 	if name != "" {
-		vmgo.Name = name
+		vm.Name = name
 	} else {
-		vmgo.Name = namesgenerator.GetRandomName(0)
+		vm.Name = namesgenerator.GetRandomName(0)
 	}
 
 	ctx := context.Background()
@@ -81,16 +84,16 @@ func NewVmgo(name, parentImage string, size VMSize, cloud, efi bool, workdir str
 	}
 	// Check the workdir
 	if workdir != "" {
-		vmgo.Workdir = workdir
+		vm.Workdir = workdir
 	} else {
-		vmgo.Workdir = wdir
+		vm.Workdir = wdir
 	}
 
 	// Check if user data is provided
 	if userData != "" {
 		absUserData, err := filepath.Abs(userData)
 		if err != nil {
-			fmt.Printf("Unable to determine %s user data file location: %v\n", vmgo, err)
+			fmt.Printf("Unable to determine %v user data file location: %v\n", vm, err)
 			os.Exit(1)
 		}
 		// Test if the template file exists
@@ -111,33 +114,33 @@ func NewVmgo(name, parentImage string, size VMSize, cloud, efi bool, workdir str
 				}
 			}
 			if validShebang == true {
-				vmgo.generateUserData = true
-				vmgo.UserData = userData
+				vm.generateUserData = true
+				vm.UserData = userData
 			} else {
 				fmt.Println("Unable to determine the user data content")
 				os.Exit(1)
 			}
 
 		} else {
-			vmgo.UserData = absUserData
+			vm.UserData = absUserData
 		}
 	}
 
 	// Check if any flavor is provided
 	if size != (VMSize{}) {
-		vmgo.Size = size
+		vm.Size = size
 	} else {
-		vmgo.Size = GetVMSizeFromFlavor("")
+		vm.Size = GetVMSizeFromFlavor("")
 	}
 
 	// Check if efi flag is provided
 	if efi != false {
-		vmgo.Efi = efi
+		vm.Efi = efi
 	}
 
 	// Check if cloud flag is provided
 	if cloud != false {
-		vmgo.Cloud = cloud
+		vm.Cloud = cloud
 
 	}
 
@@ -146,24 +149,25 @@ func NewVmgo(name, parentImage string, size VMSize, cloud, efi bool, workdir str
 		if err != nil {
 			log.Fatal(err)
 		}
-		vmgo.SSHKey = string(key)
+		vm.SSHKey = string(key)
 	} else {
 		key, err := ioutil.ReadFile(keyPath)
 		if err != nil {
 			log.Fatal(err)
 		}
-		vmgo.SSHKey = string(key)
+		vm.SSHKey = string(key)
 	}
 
-	vmgo.NetOpts.IP = netOpts.IP
-	vmgo.NetOpts.MAC = netOpts.MAC
-	vmgo.NetOpts.NetID = netOpts.NetID
-	vmgo.NetOpts.DNS = netOpts.DNS
+	vm.NetOpts.IP = netOpts.IP
+	vm.NetOpts.MAC = netOpts.MAC
+	vm.NetOpts.NetID = netOpts.NetID
+	vm.NetOpts.DNS = netOpts.DNS
 
-	return vmgo
+	return vm
 }
 
-func (vmgo *Vmgo) ShowInfo() {
+// ShowInfo shows VM's information
+func (vm *VM) ShowInfo() {
 	ctx := context.Background()
 
 	// Create the Docker API client
@@ -172,31 +176,31 @@ func (vmgo *Vmgo) ShowInfo() {
 		panic(err)
 	}
 
-	containerInfo, _ := cli.ContainerInspect(ctx, vmgo.containerID)
+	containerInfo, _ := cli.ContainerInspect(ctx, vm.containerID)
 	fmt.Printf("[%s]\nIP Address: %s\n", containerInfo.Name[1:], containerInfo.NetworkSettings.DefaultNetworkSettings.IPAddress)
 
 }
 
-func (vmgo *Vmgo) setVNC(vmgoName string, port string) error {
+func (vm *VM) setVNC(vmName string, port string) error {
 	ctx := context.Background()
 
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		return err
 	}
-	err = docker.PullImage(ctx, cli, "vmgo/novnc-server")
+	err = docker.PullImage(ctx, cli, "vm/novnc-server")
 	if err != nil {
 		return err
 	}
 
-	err = docker.ContainerSearch(ctx, cli, "vmgo-novnc")
+	err = docker.ContainerSearch(ctx, cli, "vm-novnc")
 	if err != nil {
 		mountBinds := []string{
-			fmt.Sprintf("%v/data:/vmgo", vmgo.Workdir)}
+			fmt.Sprintf("%v/data:/vm", vm.Workdir)}
 
 		containerConfig := &container.Config{
-			Image:    "vmgo/novnc-server",
-			Hostname: vmgo.Name,
+			Image:    "vm/novnc-server",
+			Hostname: vm.Name,
 			Cmd:      nil,
 			Env:      nil,
 			Labels:   nil,
@@ -208,7 +212,7 @@ func (vmgo *Vmgo) setVNC(vmgoName string, port string) error {
 			NetworkMode:     "host",
 			Binds:           mountBinds,
 		}
-		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, &network.NetworkingConfig{}, "vmgo-novnc")
+		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, &network.NetworkingConfig{}, "vm-novnc")
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -217,7 +221,7 @@ func (vmgo *Vmgo) setVNC(vmgoName string, port string) error {
 
 	execCmd := []string{"/noVNC/utils/websockify/run",
 		"--web", "/noVNC",
-		"--unix-target", "/vmgo/" + vmgoName + "/vnc",
+		"--unix-target", "/vm/" + vmName + "/vnc",
 		port}
 
 	execConfig := types.ExecConfig{
@@ -225,16 +229,17 @@ func (vmgo *Vmgo) setVNC(vmgoName string, port string) error {
 		Cmd:    execCmd,
 	}
 
-	err = docker.Exec(ctx, cli, "vmgo-novnc", execConfig)
+	err = docker.Exec(ctx, cli, "vm-novnc", execConfig)
 
 	return err
 }
 
-func (vmgo *Vmgo) Launch() {
+//Launch executes the required commands to launch a new VM
+func (vm *VM) Launch() {
 	ctx := context.Background()
 
 	// Create the data dir
-	vmDataDirectory := vmgo.Workdir + "/data/" + vmgo.Name
+	vmDataDirectory := vm.Workdir + "/data/" + vm.Name
 	err := os.MkdirAll(vmDataDirectory, 0740)
 	if err != nil {
 		fmt.Printf("Unable to create: %s", vmDataDirectory)
@@ -243,13 +248,13 @@ func (vmgo *Vmgo) Launch() {
 
 	// Create the metadata file
 	vmMetaData := ConfigDriveMetaData{
-		"vmgo",
-		vmgo.Name,
+		"vm",
+		vm.Name,
 		"0",
-		vmgo.Name,
+		vm.Name,
 		map[string]string{},
 		map[string]string{
-			"mykey": vmgo.SSHKey,
+			"mykey": vm.SSHKey,
 		},
 		"0",
 	}
@@ -265,27 +270,27 @@ func (vmgo *Vmgo) Launch() {
 	}
 
 	// Create the user_data file
-	if vmgo.generateUserData == true {
-		err = ioutil.WriteFile(vmDataDirectory+"/user_data", []byte(vmgo.UserData), 0664)
+	if vm.generateUserData == true {
+		err = ioutil.WriteFile(vmDataDirectory+"/user_data", []byte(vm.UserData), 0664)
 		if err != nil {
 			log.Fatal(err)
 		}
-		vmgo.UserData = vmDataDirectory + "/user_data"
+		vm.UserData = vmDataDirectory + "/user_data"
 	}
 
 	// Default Enviroment Variables
 	env := []string{
 		"AUTO_ATTACH=yes",
 		"DEBUG=yes",
-		//fmt.Sprintf("KVM_CPU_OPTS=%v", vmgo.Size),
+		//fmt.Sprintf("KVM_CPU_OPTS=%v", vm.Size),
 		fmt.Sprintf("KVM_CPU_OPTS=-cpu %s -smp sockets=%v,cpus=%v,cores=%v,threads=%v,maxcpus=%v -m %d",
-			vmgo.Size.CpuModel,
-			vmgo.Size.Sockets,
-			vmgo.Size.Cpus,
-			vmgo.Size.Cores,
-			vmgo.Size.Threads,
-			(vmgo.Size.Sockets * vmgo.Size.Cores * vmgo.Size.Threads),
-			vmgo.Size.Ram,
+			vm.Size.CpuModel,
+			vm.Size.Sockets,
+			vm.Size.Cpus,
+			vm.Size.Cores,
+			vm.Size.Threads,
+			(vm.Size.Sockets * vm.Size.Cores * vm.Size.Threads),
+			vm.Size.Ram,
 		),
 	}
 	if host_dns {
@@ -296,23 +301,23 @@ func (vmgo *Vmgo) Launch() {
 	qemuParams := []string{
 		"-vnc unix:/data/vnc",
 	}
-	if vmgo.Efi {
+	if vm.Efi {
 		qemuParams = append(qemuParams, "-bios /OVMF.fd ")
 	}
-	if vmgo.Cloud {
+	if vm.Cloud {
 		env = append(env, "CLOUD=yes")
 		env = append(env, "CLOUD_INIT_OPTS=-drive file=/data/seed.iso,if=virtio,format=raw ")
 	}
 
 	// Default Mount binds
 	defaultMountBinds := []string{
-		fmt.Sprintf("%v:/image/image", vmgo.ParentImage),
+		fmt.Sprintf("%v:/image/image", vm.ParentImage),
 		fmt.Sprintf("%v:/data", vmDataDirectory),
 		fmt.Sprintf("%v:/cloud-init/openstack/latest/meta_data.json", vmDataDirectory+"/meta_data.json"),
 	}
 
-	if vmgo.UserData != "" {
-		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/cloud-init/openstack/latest/user_data", vmgo.UserData))
+	if vm.UserData != "" {
+		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/cloud-init/openstack/latest/user_data", vm.UserData))
 	}
 
 	// Create the Docker API client
@@ -321,7 +326,7 @@ func (vmgo *Vmgo) Launch() {
 		panic(err)
 	}
 
-	err = docker.PullImage(ctx, cli, "vmgo/vmgo")
+	err = docker.PullImage(ctx, cli, "vm/vm")
 	if err != nil {
 		panic(err)
 	}
@@ -331,8 +336,8 @@ func (vmgo *Vmgo) Launch() {
 
 	// Create the Container
 	containerConfig := &container.Config{
-		Image:    "vmgo/vmgo",
-		Hostname: vmgo.Name,
+		Image:    "vm/vm",
+		Hostname: vm.Name,
 		Cmd:      qemuParams,
 		Env:      env,
 		Labels: map[string]string{
@@ -345,28 +350,28 @@ func (vmgo *Vmgo) Launch() {
 		Privileged:      true,
 		PublishAllPorts: true,
 		Binds:           defaultMountBinds,
-		DNS:             vmgo.NetOpts.DNS,
+		DNS:             vm.NetOpts.DNS,
 	}
 
-	if vmgo.NetOpts.IP != "" {
-		containerConfig.Labels["ip"] = vmgo.NetOpts.IP
+	if vm.NetOpts.IP != "" {
+		containerConfig.Labels["ip"] = vm.NetOpts.IP
 	}
 
 	networkConfig := &network.NetworkingConfig{
 		map[string]*network.EndpointSettings{
-			vmgo.NetOpts.NetID: &network.EndpointSettings{
-				IPAddress:  vmgo.NetOpts.IP,
-				MacAddress: vmgo.NetOpts.MAC,
-				NetworkID:  vmgo.NetOpts.NetID,
+			vm.NetOpts.NetID: &network.EndpointSettings{
+				IPAddress:  vm.NetOpts.IP,
+				MacAddress: vm.NetOpts.MAC,
+				NetworkID:  vm.NetOpts.NetID,
 			},
 		},
 	}
 
 	// TODO - Proper error handling
-	vmgo.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig, networkConfig, vmgo.Name)
+	vm.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig, networkConfig, vm.Name)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	vmgo.setVNC(vmgo.Name, vncPort)
+	vm.setVNC(vm.Name, vncPort)
 }
