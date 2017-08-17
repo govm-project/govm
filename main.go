@@ -40,7 +40,8 @@ type ConfigDriveMetaData struct {
 	UUID             string            `json:"uuid"`
 }
 
-/* helper function to find a tcp port */
+// helper function to find a tcp port
+// TODO: Find a better way to do this
 func findPort() int {
 	address, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
 	if err != nil {
@@ -51,7 +52,10 @@ func findPort() int {
 	if err != nil {
 		panic(err)
 	}
-	defer listen.Close()
+	defer func() {
+		_ = listen.Close()
+		// TODO: log error in case close statement fails
+	}()
 	return listen.Addr().(*net.TCPAddr).Port
 }
 
@@ -91,17 +95,26 @@ func main() {
 	wdir, _ = filepath.Abs(wdir)
 	_, err := os.Stat(wdir)
 	if err != nil {
-
 		fmt.Printf(" %v does not exists\n", wdir)
-		fmt.Printf("Creating %s", wdir+"/data")
-		os.MkdirAll(wdir+"/data", 0755)
-		fmt.Printf("Creating %s", wdir+"/images")
-		os.Mkdir(wdir+"/images", 0755)
 
+		fmt.Printf("Creating %s", wdir+"/data")
+		err = os.MkdirAll(wdir+"/data", 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Creating %s", wdir+"/images")
+		err = os.Mkdir(wdir+"/images", 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	vm := vmInit()
-	vm.Run(os.Args)
+	err = vm.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 /* Define the vm cli app */
@@ -292,7 +305,12 @@ func delete() cli.Command {
 				if err != nil {
 					log.Fatal(err)
 				}
-				websockifyProcess.Kill()
+
+				err = websockifyProcess.Kill()
+				if err != nil {
+					// TODO: change it to warning once log package is changed
+					log.Println(err)
+				}
 			}
 
 			err = cli.ContainerRemove(ctx, name,
@@ -304,7 +322,11 @@ func delete() cli.Command {
 			if err != nil {
 				log.Fatal(err)
 			}
-			os.RemoveAll(containerDataPath)
+
+			err = os.RemoveAll(containerDataPath)
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			return nil
 		},
@@ -357,7 +379,11 @@ func list() cli.Command {
 					"\t http://localhost:"+container.Labels["websockifyPort"]+
 					"\t "+container.Names[0][1:])
 			}
-			w.Flush()
+
+			err = w.Flush()
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			return nil
 		},

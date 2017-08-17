@@ -373,5 +373,9 @@ func (vm *VM) Launch() {
 		log.Fatal(err)
 	}
 
-	vm.setVNC(vm.Name, vncPort)
+	err = vm.setVNC(vm.Name, vncPort)
+	if err != nil {
+		// TODO: Change to warning when the log package is changed
+		log.Println(err)
+	}
 }

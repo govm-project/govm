@@ -62,13 +62,22 @@ func getNewSSHConn(username, hostname, key string) {
 	if err != nil {
 		log.Fatal("unable to connect: ", err)
 	}
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		// TODO: Change to warning when log package is changed
+		log.Println(err)
+	}()
+
 	// Create a session
 	session, err := conn.NewSession()
 	if err != nil {
 		log.Fatal("unable to create session: ", err)
 	}
-	defer session.Close()
+	defer func() {
+		err := session.Close()
+		// TODO: Change to warning when log package is changed
+		log.Println(err)
+	}()
 
 	// Set IO
 	session.Stdout = os.Stdout
