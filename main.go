@@ -29,12 +29,6 @@ var host_dns bool
 var keyPath string
 var wdir string
 
-const (
-	WORKDIR   = "$HOME/vms"
-	SSHPUBKEY = "$HOME/.ssh/id_rsa.pub"
-	IMAGE     = "$PWD/image.qcow2"
-)
-
 type ConfigDriveMetaData struct {
 	AvailabilityZone string            `json:"availavility_zone"`
 	Hostname         string            `json:"hostname"`
@@ -89,8 +83,8 @@ func main() {
 		fmt.Printf("Please specify -workdir and -pubkey\n")
 		os.Exit(1)
 	}
-	wdir = strings.Replace(WORKDIR, "$HOME", home, 1)
-	keyPath = strings.Replace(SSHPUBKEY, "$HOME", home, 1)
+	wdir = strings.Replace(VMLauncherWorkdir, "$HOME", home, 1)
+	keyPath = strings.Replace(SSHPublicKeyFile, "$HOME", home, 1)
 
 	// Check sane working directory
 	wdir, _ = filepath.Abs(wdir)
@@ -331,7 +325,7 @@ func list() cli.Command {
 				panic(err)
 			}
 			listArgs := filters.NewArgs()
-			listArgs.Add("ancestor", "vm/vm")
+			listArgs.Add("ancestor", VMLauncherContainerImage)
 			containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 				false,
 				false,
@@ -467,7 +461,7 @@ func connect() cli.Command {
 					panic(err)
 				}
 				listArgs := filters.NewArgs()
-				listArgs.Add("ancestor", "vm/vm")
+				listArgs.Add("ancestor", VMLauncherContainerImage)
 				containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 					false,
 					false,

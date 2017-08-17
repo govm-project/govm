@@ -188,18 +188,18 @@ func (vm *VM) setVNC(vmName string, port string) error {
 	if err != nil {
 		return err
 	}
-	err = docker.PullImage(ctx, cli, "vm/novnc-server")
+	err = docker.PullImage(ctx, cli, VNCContainerImage)
 	if err != nil {
 		return err
 	}
 
-	err = docker.ContainerSearch(ctx, cli, "vm-novnc")
+	err = docker.ContainerSearch(ctx, cli, VNCContainerImage)
 	if err != nil {
 		mountBinds := []string{
 			fmt.Sprintf("%v/data:/vm", vm.Workdir)}
 
 		containerConfig := &container.Config{
-			Image:    "vm/novnc-server",
+			Image:    VNCContainerImage,
 			Hostname: vm.Name,
 			Cmd:      nil,
 			Env:      nil,
@@ -212,7 +212,7 @@ func (vm *VM) setVNC(vmName string, port string) error {
 			NetworkMode:     "host",
 			Binds:           mountBinds,
 		}
-		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, &network.NetworkingConfig{}, "vm-novnc")
+		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, &network.NetworkingConfig{}, VNCServerContainerName)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -229,7 +229,7 @@ func (vm *VM) setVNC(vmName string, port string) error {
 		Cmd:    execCmd,
 	}
 
-	err = docker.Exec(ctx, cli, "vm-novnc", execConfig)
+	err = docker.Exec(ctx, cli, VNCServerContainerName, execConfig)
 
 	return err
 }
@@ -326,7 +326,7 @@ func (vm *VM) Launch() {
 		panic(err)
 	}
 
-	err = docker.PullImage(ctx, cli, "vm/vm")
+	err = docker.PullImage(ctx, cli, VMLauncherContainerImage)
 	if err != nil {
 		panic(err)
 	}
@@ -336,7 +336,7 @@ func (vm *VM) Launch() {
 
 	// Create the Container
 	containerConfig := &container.Config{
-		Image:    "vm/vm",
+		Image:    VMLauncherContainerImage,
 		Hostname: vm.Name,
 		Cmd:      qemuParams,
 		Env:      env,
