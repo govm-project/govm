@@ -284,16 +284,16 @@ func (vm *VM) Launch() {
 		"DEBUG=yes",
 		//fmt.Sprintf("KVM_CPU_OPTS=%v", vm.Size),
 		fmt.Sprintf("KVM_CPU_OPTS=-cpu %s -smp sockets=%v,cpus=%v,cores=%v,threads=%v,maxcpus=%v -m %d",
-			vm.Size.CpuModel,
+			vm.Size.CPUModel,
 			vm.Size.Sockets,
 			vm.Size.Cpus,
 			vm.Size.Cores,
 			vm.Size.Threads,
 			(vm.Size.Sockets * vm.Size.Cores * vm.Size.Threads),
-			vm.Size.Ram,
+			vm.Size.RAM,
 		),
 	}
-	if host_dns {
+	if hostDNS {
 		env = append(env, "ENABLE_DHCP=no")
 	}
 

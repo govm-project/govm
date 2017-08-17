@@ -5,23 +5,25 @@ import (
 	"os/exec"
 )
 
+//VMSize specifies all custome VM size fields
 type VMSize struct {
-	CpuModel string `yaml:cpu-model`
-	Sockets  int    `yaml:sockets`
-	Cpus     int    `yaml:cpus`
-	Cores    int    `yaml:cores`
-	Threads  int    `yaml:threads`
-	Ram      int    `yaml:ram`
+	CPUModel string `yaml:"cpu-model"`
+	Sockets  int    `yaml:"sockets"`
+	Cpus     int    `yaml:"cpus"`
+	Cores    int    `yaml:"cores"`
+	Threads  int    `yaml:"threads"`
+	RAM      int    `yaml:"ram"`
 }
 
+//NewVMSize creates a new VMSize specification
 func NewVMSize(model string, sockets, cpus, cores, threads, ram int) VMSize {
 	var vmSize VMSize
 
 	if model != "" {
-		vmSize.CpuModel = model
+		vmSize.CPUModel = model
 	} else {
 		if vmxSupport() {
-			vmSize.CpuModel = "host"
+			vmSize.CPUModel = "host"
 		}
 	}
 
@@ -50,14 +52,15 @@ func NewVMSize(model string, sockets, cpus, cores, threads, ram int) VMSize {
 	}
 
 	if ram != 0 {
-		vmSize.Ram = ram
+		vmSize.RAM = ram
 	} else {
-		vmSize.Ram = 4096
+		vmSize.RAM = 4096
 	}
 
 	return vmSize
 }
 
+//GetVMSizeFromFlavor gets default set of values from a given flavor
 func GetVMSizeFromFlavor(flavor string) VMSize {
 	var size VMSize
 	var cpuModel string

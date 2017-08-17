@@ -25,10 +25,11 @@ import (
 /* global variables */
 var efi bool
 var cloud bool
-var host_dns bool
+var hostDNS bool
 var keyPath string
 var wdir string
 
+//ConfigDriveMetaData stands for cloud images config drive
 type ConfigDriveMetaData struct {
 	AvailabilityZone string            `json:"availavility_zone"`
 	Hostname         string            `json:"hostname"`

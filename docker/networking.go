@@ -9,11 +9,13 @@ import (
 	"github.com/golang/glog"
 )
 
+// Network is an structure for user-defined networks
 type Network struct {
 	Name   string `yaml:"name"`
 	Subnet string `yaml:"subnet"`
 }
 
+// VerifyNetwork verifies a docker managed network
 func VerifyNetwork(ctx context.Context, cli *client.Client, networkName string) error {
 	filters := filters.NewArgs()
 	filters.Add("name", networkName)

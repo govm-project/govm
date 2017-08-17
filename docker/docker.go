@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// PullImage pulls image from docker registry
 func PullImage(ctx context.Context, cli *client.Client, imageName string) error {
 	_, err := cli.ImagePull(ctx, "alpine", types.ImagePullOptions{})
 	if err != nil {
@@ -19,6 +20,7 @@ func PullImage(ctx context.Context, cli *client.Client, imageName string) error 
 	return err
 }
 
+// Exec executes commands inside a running container
 func Exec(ctx context.Context, cli *client.Client, containerName string,
 	execConfig types.ExecConfig) error {
 
@@ -31,6 +33,7 @@ func Exec(ctx context.Context, cli *client.Client, containerName string,
 	return err
 }
 
+// Run starts a new docker container
 func Run(ctx context.Context, cli *client.Client, containerConfig *container.Config,
 	hostConfig *container.HostConfig, networkConfig *network.NetworkingConfig, name string) (string, error) {
 
@@ -43,6 +46,7 @@ func Run(ctx context.Context, cli *client.Client, containerConfig *container.Con
 	return resp.ID, err
 }
 
+// ContainerSearch searches a container from the running docker containers
 func ContainerSearch(ctx context.Context, cli *client.Client, name string) error {
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
