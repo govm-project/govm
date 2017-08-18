@@ -23,8 +23,6 @@ import (
 )
 
 /* global variables */
-var efi bool
-var cloud bool
 var hostDNS bool
 var keyPath string
 var wdir string
@@ -72,10 +70,6 @@ func saneImage(path string) error {
 	if !mode.IsRegular() {
 		return fmt.Errorf("%v is not a regular file", path)
 	}
-	return nil
-}
-
-func prepare() error {
 	return nil
 }
 

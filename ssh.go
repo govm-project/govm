@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -15,21 +14,6 @@ type password string
 
 func (p password) Password(user string) (password string, err error) {
 	return string(p), nil
-}
-
-//PublicKeyFile generate authentication method from a given public ssh key
-func PublicKeyFile(file string) (ssh.AuthMethod, error) {
-	file, _ = filepath.Abs(file)
-	buffer, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
-
-	key, err := ssh.ParsePrivateKey(buffer)
-	if err != nil {
-		return nil, err
-	}
-	return ssh.PublicKeys(key), nil
 }
 
 func getNewSSHConn(username, hostname, key string) {
