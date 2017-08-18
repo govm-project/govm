@@ -32,18 +32,17 @@ type NetworkingOptions struct {
 
 //VM contains all VM's attributes
 type VM struct {
-	Name        string            `yaml:"name"`
-	ParentImage string            `yaml:"image"`
-	Size        VMSize            `yaml:"size"`
-	Cloud       bool              `yaml:"cloud"`
-	Efi         bool              `yaml:"efi"`
-	Workdir     string            `yaml:"workdir"`
-	SSHKey      string            `yaml:"sshkey"`
-	UserData    string            `yaml:"user-data"`
-	NetOpts     NetworkingOptions `yaml:"networking"`
-
-	containerID      string
-	generateUserData bool
+	Name             string            `yaml:"name"`
+	ParentImage      string            `yaml:"image"`
+	Size             VMSize            `yaml:"size"`
+	Workdir          string            `yaml:"workdir"`
+	SSHKey           string            `yaml:"sshkey"`
+	UserData         string            `yaml:"user-data"`
+	Cloud            bool              `yaml:"cloud"`
+	Efi              bool              `yaml:"efi"`
+	generateUserData bool              `yaml:"userdata"`
+	containerID      string            `yaml:"container-id"`
+	NetOpts          NetworkingOptions `yaml:"networking"`
 }
 
 //NewVM creates a new VM object
