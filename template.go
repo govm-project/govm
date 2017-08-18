@@ -61,7 +61,7 @@ func NewVMTemplate(c *VMTemplate) VMTemplate {
 					CheckDuplicate: true,
 					IPAM: &network.IPAM{
 						Config: []network.IPAMConfig{
-							network.IPAMConfig{Subnet: net.Subnet},
+							{Subnet: net.Subnet},
 						},
 					},
 					Options: map[string]string{

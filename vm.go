@@ -362,7 +362,7 @@ func (vm *VM) Launch() {
 
 	networkConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
-			vm.NetOpts.NetID: &network.EndpointSettings{
+			vm.NetOpts.NetID: {
 				IPAddress:  vm.NetOpts.IP,
 				MacAddress: vm.NetOpts.MAC,
 				NetworkID:  vm.NetOpts.NetID,
