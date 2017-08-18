@@ -32,6 +32,9 @@ func NewVMTemplate(c *VMTemplate) VMTemplate {
 			NewVM(
 				vm.Name,
 				vm.ParentImage,
+				vm.Workdir,
+				vm.SSHKey,
+				vm.UserData,
 				NewVMSize(vm.Size.CPUModel,
 					vm.Size.Sockets,
 					vm.Size.Cpus,
@@ -41,9 +44,6 @@ func NewVMTemplate(c *VMTemplate) VMTemplate {
 				),
 				vm.Cloud,
 				vm.Efi,
-				vm.Workdir,
-				vm.SSHKey,
-				vm.UserData,
 				vm.NetOpts,
 			),
 		)

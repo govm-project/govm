@@ -247,12 +247,12 @@ func create() cli.Command {
 			vm := NewVM(
 				c.String("name"),
 				parentImage,
-				flavor,
-				c.Bool("cloud"),
-				c.Bool("efi"),
 				c.String("workdir"),
 				c.String("key"),
 				c.String("user-data"),
+				flavor,
+				c.Bool("cloud"),
+				c.Bool("efi"),
 				NetworkingOptions{})
 			vm.Launch()
 			vm.ShowInfo()
@@ -354,16 +354,17 @@ func list() cli.Command {
 			}
 			listArgs := filters.NewArgs()
 			listArgs.Add("ancestor", VMLauncherContainerImage)
-			containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
-				Quiet:   false,
-				Size:    false,
-				All:     true,
-				Latest:  false,
-				Since:   "",
-				Before:  "",
-				Limit:   0,
-				Filters: listArgs,
-			})
+			containers, err := cli.ContainerList(context.Background(),
+				types.ContainerListOptions{
+					Quiet:   false,
+					Size:    false,
+					All:     true,
+					Latest:  false,
+					Since:   "",
+					Before:  "",
+					Limit:   0,
+					Filters: listArgs,
+				})
 			if err != nil {
 				panic(err)
 			}
@@ -494,16 +495,17 @@ func connect() cli.Command {
 				}
 				listArgs := filters.NewArgs()
 				listArgs.Add("ancestor", VMLauncherContainerImage)
-				containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
-					Quiet:   false,
-					Size:    false,
-					All:     true,
-					Latest:  false,
-					Since:   "",
-					Before:  "",
-					Limit:   0,
-					Filters: listArgs,
-				})
+				containers, err := cli.ContainerList(context.Background(),
+					types.ContainerListOptions{
+						Quiet:   false,
+						Size:    false,
+						All:     true,
+						Latest:  false,
+						Since:   "",
+						Before:  "",
+						Limit:   0,
+						Filters: listArgs,
+					})
 				if err != nil {
 					panic(err)
 				}

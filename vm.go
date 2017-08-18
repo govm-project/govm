@@ -47,7 +47,8 @@ type VM struct {
 }
 
 //NewVM creates a new VM object
-func NewVM(name, parentImage string, size VMSize, cloud, efi bool, workdir string, publicKey string, userData string, netOpts NetworkingOptions) VM {
+func NewVM(name, parentImage, workdir, publicKey, userData string, size VMSize,
+	cloud, efi bool, netOpts NetworkingOptions) VM {
 	var vm VM
 	var err error
 
@@ -176,7 +177,8 @@ func (vm *VM) ShowInfo() {
 	}
 
 	containerInfo, _ := cli.ContainerInspect(ctx, vm.containerID)
-	fmt.Printf("[%s]\nIP Address: %s\n", containerInfo.Name[1:], containerInfo.NetworkSettings.DefaultNetworkSettings.IPAddress)
+	fmt.Printf("[%s]\nIP Address: %s\n", containerInfo.Name[1:],
+		containerInfo.NetworkSettings.DefaultNetworkSettings.IPAddress)
 
 }
 
@@ -211,7 +213,8 @@ func (vm *VM) setVNC(vmName string, port string) error {
 			NetworkMode:     "host",
 			Binds:           mountBinds,
 		}
-		_, err := docker.Run(ctx, cli, containerConfig, hostConfig, &network.NetworkingConfig{}, VNCServerContainerName)
+		_, err := docker.Run(ctx, cli, containerConfig, hostConfig,
+			&network.NetworkingConfig{}, VNCServerContainerName)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -270,7 +273,8 @@ func (vm *VM) Launch() {
 
 	// Create the user_data file
 	if vm.generateUserData {
-		err = ioutil.WriteFile(vmDataDirectory+"/user_data", []byte(vm.UserData), 0664)
+		err = ioutil.WriteFile(vmDataDirectory+"/user_data",
+			[]byte(vm.UserData), 0664)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -281,8 +285,7 @@ func (vm *VM) Launch() {
 	env := []string{
 		"AUTO_ATTACH=yes",
 		"DEBUG=yes",
-		//fmt.Sprintf("KVM_CPU_OPTS=%v", vm.Size),
-		fmt.Sprintf("KVM_CPU_OPTS=-cpu %s -smp sockets=%v,cpus=%v,cores=%v,threads=%v,maxcpus=%v -m %d",
+		fmt.Sprintf(KVMCPUOpts,
 			vm.Size.CPUModel,
 			vm.Size.Sockets,
 			vm.Size.Cpus,
@@ -305,18 +308,19 @@ func (vm *VM) Launch() {
 	}
 	if vm.Cloud {
 		env = append(env, "CLOUD=yes")
-		env = append(env, "CLOUD_INIT_OPTS=-drive file=/data/seed.iso,if=virtio,format=raw ")
+		env = append(env, CloudInitOpts)
 	}
 
 	// Default Mount binds
 	defaultMountBinds := []string{
-		fmt.Sprintf("%v:/image/image", vm.ParentImage),
-		fmt.Sprintf("%v:/data", vmDataDirectory),
-		fmt.Sprintf("%v:/cloud-init/openstack/latest/meta_data.json", vmDataDirectory+"/meta_data.json"),
+		fmt.Sprintf(ImageMount, vm.ParentImage),
+		fmt.Sprintf(DataMount, vmDataDirectory),
+		fmt.Sprintf(MetadataMount, vmDataDirectory, MedatataFile),
 	}
 
 	if vm.UserData != "" {
-		defaultMountBinds = append(defaultMountBinds, fmt.Sprintf("%s:/cloud-init/openstack/latest/user_data", vm.UserData))
+		defaultMountBinds = append(defaultMountBinds,
+			fmt.Sprintf(UserDataMount, vm.UserData))
 	}
 
 	// Create the Docker API client
@@ -367,7 +371,8 @@ func (vm *VM) Launch() {
 	}
 
 	// TODO - Proper error handling
-	vm.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig, networkConfig, vm.Name)
+	vm.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig,
+		networkConfig, vm.Name)
 	if err != nil {
 		log.Fatal(err)
 	}

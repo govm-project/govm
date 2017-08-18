@@ -12,8 +12,8 @@ import (
 )
 
 // PullImage pulls image from docker registry
-func PullImage(ctx context.Context, cli *client.Client, imageName string) error {
-	_, err := cli.ImagePull(ctx, "alpine", types.ImagePullOptions{})
+func PullImage(ctx context.Context, cli *client.Client, image string) error {
+	_, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -29,15 +29,18 @@ func Exec(ctx context.Context, cli *client.Client, containerName string,
 	if err != nil {
 		return err
 	}
-	err = cli.ContainerExecStart(ctx, resp.ID, types.ExecStartCheck{Detach: true, Tty: false})
+	err = cli.ContainerExecStart(ctx, resp.ID,
+		types.ExecStartCheck{Detach: true, Tty: false})
 	return err
 }
 
 // Run starts a new docker container
-func Run(ctx context.Context, cli *client.Client, containerConfig *container.Config,
-	hostConfig *container.HostConfig, networkConfig *network.NetworkingConfig, name string) (string, error) {
+func Run(ctx context.Context, cli *client.Client,
+	containerConfig *container.Config, hostConfig *container.HostConfig,
+	networkConfig *network.NetworkingConfig, name string) (string, error) {
 
-	resp, err := cli.ContainerCreate(ctx, containerConfig, hostConfig, networkConfig, name)
+	resp, err := cli.ContainerCreate(ctx, containerConfig, hostConfig,
+		networkConfig, name)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +50,8 @@ func Run(ctx context.Context, cli *client.Client, containerConfig *container.Con
 }
 
 // ContainerSearch searches a container from the running docker containers
-func ContainerSearch(ctx context.Context, cli *client.Client, name string) error {
+func ContainerSearch(ctx context.Context, cli *client.Client,
+	name string) error {
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
 		return err

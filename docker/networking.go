@@ -16,9 +16,9 @@ type Network struct {
 }
 
 // VerifyNetwork verifies a docker managed network
-func VerifyNetwork(ctx context.Context, cli *client.Client, networkName string) error {
+func VerifyNetwork(ctx context.Context, cli *client.Client, name string) error {
 	filters := filters.NewArgs()
-	filters.Add("name", networkName)
+	filters.Add("name", name)
 	_, err := cli.NetworkList(ctx, types.NetworkListOptions{
 		Filters: filters,
 	})
