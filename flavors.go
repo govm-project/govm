@@ -71,7 +71,7 @@ func GetVMSizeFromFlavor(flavor string) VMSize {
 		cpuModel = "haswell"
 	}
 
-	switch string(flavor) {
+	switch flavor {
 	case "micro":
 		size = NewVMSize(cpuModel, 1, 1, 1, 1, 512)
 	case "tiny":
