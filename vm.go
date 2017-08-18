@@ -281,7 +281,7 @@ func (vm *VM) Launch() {
 		vm.UserData = vmDataDirectory + "/user_data"
 	}
 
-	// Default Enviroment Variables
+	// Default Environment Variables
 	env := []string{
 		"AUTO_ATTACH=yes",
 		"DEBUG=yes",
