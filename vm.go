@@ -113,7 +113,7 @@ func NewVM(name, parentImage string, size VMSize, cloud, efi bool, workdir strin
 					validShebang = true
 				}
 			}
-			if validShebang == true {
+			if validShebang {
 				vm.generateUserData = true
 				vm.UserData = userData
 			} else {
@@ -134,14 +134,13 @@ func NewVM(name, parentImage string, size VMSize, cloud, efi bool, workdir strin
 	}
 
 	// Check if efi flag is provided
-	if efi != false {
+	if efi {
 		vm.Efi = efi
 	}
 
 	// Check if cloud flag is provided
-	if cloud != false {
+	if cloud {
 		vm.Cloud = cloud
-
 	}
 
 	if publicKey != "" {
@@ -270,7 +269,7 @@ func (vm *VM) Launch() {
 	}
 
 	// Create the user_data file
-	if vm.generateUserData == true {
+	if vm.generateUserData {
 		err = ioutil.WriteFile(vmDataDirectory+"/user_data", []byte(vm.UserData), 0664)
 		if err != nil {
 			log.Fatal(err)

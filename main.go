@@ -513,7 +513,7 @@ func connect() cli.Command {
 						vmID = id
 					}
 				}
-				if nameFound != true {
+				if !nameFound {
 					fmt.Printf("Unable to find a running vm with name: %s", name)
 					os.Exit(1)
 				} else {
