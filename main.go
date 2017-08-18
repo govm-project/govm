@@ -51,8 +51,9 @@ func findPort() int {
 		panic(err)
 	}
 	defer func() {
-		_ = listen.Close()
-		// TODO: log error in case close statement fails
+		err = listen.Close()
+		// TODO: Change to warning or error when log package is changed
+		log.Println(err)
 	}()
 	return listen.Addr().(*net.TCPAddr).Port
 }

@@ -66,7 +66,10 @@ func getNewSSHConn(username, hostname, key string) {
 	// Set IO
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stderr
-	in, _ := session.StdinPipe()
+	in, err := session.StdinPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Set up terminal modes
 	modes := ssh.TerminalModes{
@@ -88,7 +91,13 @@ func getNewSSHConn(username, hostname, key string) {
 	// Accepting commands
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		str, _ := reader.ReadString('\n')
-		fmt.Fprint(in, str)
+		str, err := reader.ReadString('\n')
+		if err != nil {
+			log.Println("Error reading command")
+		}
+		_, err = fmt.Fprint(in, str)
+		if err != nil {
+			log.Println("Error reading command")
+		}
 	}
 }
