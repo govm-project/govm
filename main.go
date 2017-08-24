@@ -93,13 +93,13 @@ func main() {
 		fmt.Printf(" %v does not exists\n", wdir)
 
 		fmt.Printf("Creating %s", wdir+"/data")
-		err = os.MkdirAll(wdir+"/data", 0755)
+		err = os.MkdirAll(wdir+"/data", 0755) // nolint: gas
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		fmt.Printf("Creating %s", wdir+"/images")
-		err = os.Mkdir(wdir+"/images", 0755)
+		err = os.Mkdir(wdir+"/images", 0755) // nolint: gas
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -441,7 +441,8 @@ func compose() cli.Command {
 	return command
 }
 
-func connect() cli.Command {
+// TODO: Reduce cyclomatic complexity
+func connect() cli.Command { // nolint: gocyclo
 	command := cli.Command{
 		Name:    "connect",
 		Aliases: []string{"conn"},

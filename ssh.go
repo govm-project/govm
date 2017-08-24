@@ -16,7 +16,8 @@ func (p password) Password(user string) (password string, err error) {
 	return string(p), nil
 }
 
-func getNewSSHConn(username, hostname, key string) {
+// TODO: Reduce cyclomatic complexity
+func getNewSSHConn(username, hostname, key string) { // nolint: gocyclo
 	//var hostKey ssh.PublicKey
 
 	privateKeyBytes, err := ioutil.ReadFile(key)

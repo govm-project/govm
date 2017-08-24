@@ -45,9 +45,18 @@ type VM struct {
 	NetOpts          NetworkingOptions `yaml:"networking"`
 }
 
-//NewVM creates a new VM object
-func NewVM(name, parentImage, workdir, publicKey, userData string, size VMSize,
-	cloud, efi bool, netOpts NetworkingOptions) VM {
+// NewVM creates a new VM object
+// TODO: Reduce cyclomatic complexity
+func NewVM( // nolint: gocyclo
+	name,
+	parentImage,
+	workdir,
+	publicKey,
+	userData string,
+	size VMSize,
+	cloud, efi bool,
+	netOpts NetworkingOptions) VM {
+
 	var vm VM
 	var err error
 
@@ -133,15 +142,8 @@ func NewVM(name, parentImage, workdir, publicKey, userData string, size VMSize,
 		vm.Size = GetVMSizeFromFlavor("")
 	}
 
-	// Check if efi flag is provided
-	if efi {
-		vm.Efi = efi
-	}
-
-	// Check if cloud flag is provided
-	if cloud {
-		vm.Cloud = cloud
-	}
+	vm.Efi = efi
+	vm.Cloud = cloud
 
 	if publicKey != "" {
 		key, err := ioutil.ReadFile(publicKey)
@@ -235,13 +237,14 @@ func (vm *VM) setVNC(vmName string, port string) error {
 	return err
 }
 
-//Launch executes the required commands to launch a new VM
-func (vm *VM) Launch() {
+// Launch executes the required commands to launch a new VM
+// TODO: Reduce cyclomatic complexity
+func (vm *VM) Launch() { // nolint: gocyclo
 	ctx := context.Background()
 
 	// Create the data dir
 	vmDataDirectory := vm.Workdir + "/data/" + vm.Name
-	err := os.MkdirAll(vmDataDirectory, 0740)
+	err := os.MkdirAll(vmDataDirectory, 0740) // nolint: gas
 	if err != nil {
 		fmt.Printf("Unable to create: %s", vmDataDirectory)
 		os.Exit(1)

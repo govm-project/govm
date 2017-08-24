@@ -89,7 +89,7 @@ func GetVMSizeFromFlavor(flavor string) VMSize {
 }
 
 func vmxSupport() bool {
-	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run()
+	err := exec.Command("grep", "-qw", "vmx", "/proc/cpuinfo").Run() // nolint: gas
 	if err != nil {
 		fmt.Println(err)
 		return false
