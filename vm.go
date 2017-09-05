@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/moby/moby/pkg/namesgenerator"
+	log "github.com/sirupsen/logrus"
 
 	"github.intel.com/clrgdc/govm/docker"
 )
@@ -195,8 +195,13 @@ func (vm *VM) setVNC(vmName string, port string) error {
 		return err
 	}
 
-	err = docker.ContainerSearch(ctx, cli, VNCContainerImage)
+	err = docker.ContainerSearch(ctx, cli, VNCServerContainerName)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"error":     err.Error(),
+			"container": VNCContainerImage,
+		}).Warn("VNC container was not found")
+
 		mountBinds := []string{
 			fmt.Sprintf("%v/data:/vm", vm.Workdir)}
 

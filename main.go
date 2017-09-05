@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"os/user"
@@ -20,6 +19,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	log "github.com/sirupsen/logrus"
 )
 
 /* global variables */
@@ -41,6 +41,8 @@ type ConfigDriveMetaData struct {
 // helper function to find a tcp port
 // TODO: Find a better way to do this
 func findPort() int {
+
+	log.Debug("Looking for an available port for VNC")
 	address, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
 	if err != nil {
 		panic(err)
@@ -48,13 +50,17 @@ func findPort() int {
 
 	listen, err := net.ListenTCP("tcp", address)
 	if err != nil {
-		panic(err)
+		log.WithField("error", err.Error).Fatal("Cannot find port")
 	}
+
 	defer func() {
 		err = listen.Close()
-		// TODO: Change to warning or error when log package is changed
-		log.Println(err)
+		if err != nil {
+			log.WithField("error",
+				err.Error).Warn("Failed to close port lister")
+		}
 	}()
+
 	return listen.Addr().(*net.TCPAddr).Port
 }
 
@@ -134,6 +140,7 @@ func vmInit() *cli.App {
 		compose(),
 		connect(),
 	}
+
 	return vmCLI
 }
 
@@ -206,10 +213,19 @@ func create() cli.Command {
 				Value: 1024,
 				Usage: "Allocated RAM",
 			},
+			cli.BoolFlag{
+				Name:  "debug",
+				Usage: "Debug mode",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			var parentImage string
 			var flavor VMSize
+
+			if c.Bool("debug") {
+				log.SetLevel(log.DebugLevel)
+			}
+
 			if c.String("image") == "" {
 				fmt.Println("Missing --image argument")
 				os.Exit(1)
