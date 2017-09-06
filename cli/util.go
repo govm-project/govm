@@ -1,24 +1,24 @@
-package main
+package cli
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/golang/glog"
-	"github.intel.com/clrgdc/govm/docker"
+	log "github.com/sirupsen/logrus"
+
+	vmLauncher "github.intel.com/clrgdc/govm/vm"
 )
 
-//VMTemplate defines a VMs orchestration template
-type VMTemplate struct {
-	VMs      []VM             `yaml:"vms"`
-	Networks []docker.Network `yaml:"networks"`
-}
-
 //NewVMTemplate creates a new VMTemplate object
-func NewVMTemplate(c *VMTemplate) VMTemplate {
-	var newVMTemplate VMTemplate
+func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
+	var newVMTemplate vmLauncher.ComposeTemplate
 
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
@@ -26,16 +26,15 @@ func NewVMTemplate(c *VMTemplate) VMTemplate {
 		panic(err)
 	}
 
-	/* VMs definitions */
 	for _, vm := range c.VMs {
 		newVMTemplate.VMs = append(newVMTemplate.VMs,
-			NewVM(
+			vmLauncher.CreateVM(
 				vm.Name,
 				vm.ParentImage,
 				vm.Workdir,
 				vm.SSHKey,
 				vm.UserData,
-				NewVMSize(vm.Size.CPUModel,
+				vmLauncher.NewVMSize(vm.Size.CPUModel,
 					vm.Size.Sockets,
 					vm.Size.Cpus,
 					vm.Size.Cores,
@@ -75,4 +74,40 @@ func NewVMTemplate(c *VMTemplate) VMTemplate {
 	}
 
 	return newVMTemplate
+}
+
+func getHomeDir() string {
+	home := os.Getenv("HOME")
+	if home == "" {
+		log.Warn("Unable to determine $HOME")
+		log.Error("Please specify -workdir and -pubkey")
+	}
+	return home
+}
+
+func getWorkDir() string {
+
+	homeDir := getHomeDir()
+	workDir := strings.Replace(VMLauncherWorkdir, "$HOME", homeDir, 1)
+	workDir, _ = filepath.Abs(workDir)
+	_, err := os.Stat(workDir)
+	if err != nil {
+		log.WithField("workdir", workDir).Warn(
+			"Work Directory does not exist")
+
+		log.WithField("workdir", workDir+"/data").Info(
+			"Creating workdir")
+		err = os.MkdirAll(workDir+"/data", 0755) // nolint: gas
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Creating %s", workDir+"/images")
+		err = os.Mkdir(workDir+"/images", 0755) // nolint: gas
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	return workDir
 }

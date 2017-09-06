@@ -1,4 +1,4 @@
-package main
+package vm
 
 // Container Images
 const (
@@ -13,8 +13,7 @@ const (
 
 // VM launcher environment variables
 const (
-	VMLauncherWorkdir = "$HOME/vms"
-	SSHPublicKeyFile  = "$HOME/.ssh/id_rsa.pub"
+	SSHPublicKeyFile = "$HOME/.ssh/id_rsa.pub"
 )
 
 // Qemu Command Parameters

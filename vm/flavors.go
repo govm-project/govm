@@ -1,23 +1,15 @@
-package main
+package vm
 
 import (
 	"fmt"
 	"os/exec"
+
+	"github.intel.com/clrgdc/govm/types"
 )
 
-//VMSize specifies all custome VM size fields
-type VMSize struct {
-	CPUModel string `yaml:"cpu-model"`
-	Sockets  int    `yaml:"sockets"`
-	Cpus     int    `yaml:"cpus"`
-	Cores    int    `yaml:"cores"`
-	Threads  int    `yaml:"threads"`
-	RAM      int    `yaml:"ram"`
-}
-
 //NewVMSize creates a new VMSize specification
-func NewVMSize(model string, sockets, cpus, cores, threads, ram int) VMSize {
-	var vmSize VMSize
+func NewVMSize(model string, sockets, cpus, cores, threads, ram int) types.VMSize {
+	var vmSize types.VMSize
 
 	if model != "" {
 		vmSize.CPUModel = model
@@ -61,8 +53,8 @@ func NewVMSize(model string, sockets, cpus, cores, threads, ram int) VMSize {
 }
 
 //GetVMSizeFromFlavor gets default set of values from a given flavor
-func GetVMSizeFromFlavor(flavor string) VMSize {
-	var size VMSize
+func GetVMSizeFromFlavor(flavor string) types.VMSize {
+	var size types.VMSize
 	var cpuModel string
 
 	if vmxSupport() {

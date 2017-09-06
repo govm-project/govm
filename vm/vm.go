@@ -1,4 +1,4 @@
-package main
+package vm
 
 import (
 	"bufio"
@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -18,44 +19,37 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.intel.com/clrgdc/govm/docker"
+	vmTypes "github.intel.com/clrgdc/govm/types"
 )
 
 var vncPort string
 
-//NetworkingOptions specifies network details for new VM
-type NetworkingOptions struct {
-	IP    string   `yaml:"ip"`
-	MAC   string   `yaml:"mac"`
-	NetID string   `yaml:"net-id"`
-	DNS   []string `yaml:"dns"`
-}
-
 //VM contains all VM's attributes
 type VM struct {
-	Name             string            `yaml:"name"`
-	ParentImage      string            `yaml:"image"`
-	Size             VMSize            `yaml:"size"`
-	Workdir          string            `yaml:"workdir"`
-	SSHKey           string            `yaml:"sshkey"`
-	UserData         string            `yaml:"user-data"`
-	Cloud            bool              `yaml:"cloud"`
-	Efi              bool              `yaml:"efi"`
-	generateUserData bool              `yaml:"userdata"`
-	containerID      string            `yaml:"container-id"`
-	NetOpts          NetworkingOptions `yaml:"networking"`
+	Name             string                    `yaml:"name"`
+	ParentImage      string                    `yaml:"image"`
+	Size             vmTypes.VMSize            `yaml:"size"`
+	Workdir          string                    `yaml:"workdir"`
+	SSHKey           string                    `yaml:"sshkey"`
+	UserData         string                    `yaml:"user-data"`
+	Cloud            bool                      `yaml:"cloud"`
+	Efi              bool                      `yaml:"efi"`
+	generateUserData bool                      `yaml:"userdata"`
+	containerID      string                    `yaml:"container-id"`
+	NetOpts          vmTypes.NetworkingOptions `yaml:"networking"`
 }
 
-// NewVM creates a new VM object
+// CreateVM creates a new VM object
 // TODO: Reduce cyclomatic complexity
-func NewVM( // nolint: gocyclo
+func CreateVM( // nolint: gocyclo
 	name,
 	parentImage,
 	workdir,
 	publicKey,
 	userData string,
-	size VMSize,
+	size vmTypes.VMSize,
 	cloud, efi bool,
-	netOpts NetworkingOptions) VM {
+	netOpts vmTypes.NetworkingOptions) VM {
 
 	var vm VM
 	var err error
@@ -69,7 +63,7 @@ func NewVM( // nolint: gocyclo
 		fmt.Printf("Unable to determine image location: %v\n", err)
 		os.Exit(1)
 	}
-	err = saneImage(parentImage)
+	err = SaneImage(parentImage)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
@@ -91,12 +85,7 @@ func NewVM( // nolint: gocyclo
 	if err == nil {
 		log.Fatal("There is an existing container with the same name")
 	}
-	// Check the workdir
-	if workdir != "" {
-		vm.Workdir = workdir
-	} else {
-		vm.Workdir = wdir
-	}
+	vm.Workdir = workdir
 
 	// Check if user data is provided
 	if userData != "" {
@@ -136,7 +125,7 @@ func NewVM( // nolint: gocyclo
 	}
 
 	// Check if any flavor is provided
-	if size != (VMSize{}) {
+	if size != (vmTypes.VMSize{}) {
 		vm.Size = size
 	} else {
 		vm.Size = GetVMSizeFromFlavor("")
@@ -152,6 +141,8 @@ func NewVM( // nolint: gocyclo
 		}
 		vm.SSHKey = string(key)
 	} else {
+		homeDir := getHomeDir()
+		keyPath := strings.Replace(SSHPublicKeyFile, "$HOME", homeDir, 1)
 		key, err := ioutil.ReadFile(keyPath)
 		if err != nil {
 			log.Fatal(err)
@@ -256,7 +247,7 @@ func (vm *VM) Launch() { // nolint: gocyclo
 	}
 
 	// Create the metadata file
-	vmMetaData := ConfigDriveMetaData{
+	vmMetaData := vmTypes.ConfigDriveMetaData{
 		"vm",
 		vm.Name,
 		"0",
@@ -302,9 +293,10 @@ func (vm *VM) Launch() { // nolint: gocyclo
 			vm.Size.RAM,
 		),
 	}
-	if hostDNS {
-		env = append(env, "ENABLE_DHCP=no")
-	}
+
+	//if hostDNS {
+	//	env = append(env, "ENABLE_DHCP=no")
+	//}
 
 	/* QEMU ARGUMENTS PASSED TO THE CONTAINER */
 	qemuParams := []string{
