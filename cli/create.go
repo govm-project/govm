@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	log "github.com/sirupsen/logrus"
@@ -85,6 +86,10 @@ func create() cli.Command {
 				Name:  "debug",
 				Usage: "Debug mode",
 			},
+			cli.StringSliceFlag{
+				Name:  "share",
+				Usage: "Share directories. e.g. --share /host/path:/guest/path",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			var parentImage string
@@ -123,11 +128,24 @@ func create() cli.Command {
 				)
 			}
 
+			// Check if there are any shares and validate the format.
+			// They must be separated by the ":" characted as docker does
+			if len(c.StringSlice("share")) > 0 {
+				for _, dir := range c.StringSlice("share") {
+					share := strings.Split(dir, ":")
+					if len(share) != 2 {
+						log.Fatal("Wrong share format: " + dir +
+							"\nUsage: --share /host/path:/guest/path")
+
+					}
+
+				}
+			}
+
 			workDir := c.String("workdir")
 			if workDir == "" {
 				workDir = getWorkDir()
 			}
-
 			newVM := vm.CreateVM(
 				c.String("name"),
 				parentImage,
@@ -137,7 +155,9 @@ func create() cli.Command {
 				flavor,
 				c.Bool("cloud"),
 				c.Bool("efi"),
-				types.NetworkingOptions{})
+				types.NetworkingOptions{},
+				c.StringSlice("share"),
+			)
 			newVM.Launch()
 			newVM.ShowInfo()
 			return nil

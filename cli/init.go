@@ -10,6 +10,7 @@ import (
 // This variable must be modified with ldflag when building.
 var Revision string
 
+//Init initializes the CLI app
 func Init() *cli.App {
 
 	// Modify default binary's version string

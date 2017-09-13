@@ -40,13 +40,22 @@ case "$COPY_ON_WRITE" in
 	  ;;
 esac
 
+if [[ "$CLOUD" =~ [Yy1] ]]; then
+    # Create a cloud-init iso
+    genisoimage -o /data/seed.iso -V config-2 -r -J /cloud-init
+fi
 
-case "$CLOUD" in
-	[Yy1]*)
-		# Create a cloud-init iso
-		genisoimage -o /data/seed.iso -V config-2 -r -J /cloud-init
-		;;
-esac
+# Shared directories options (9p).
+SHARED_DIRS=${SHARED_DIRS:-""}
+if [ "$SHARED_DIRS" != "" ]; then
+  for dir in ${SHARED_DIRS[@]}; do
+    if [ -d $dir ]; then
+      share_uuid=$(cat /proc/sys/kernel/random/uuid)
+      SHARED_DIRS_OPTS+="-fsdev local,id=${share_uuid},path=${dir},security_model=passthrough -device virtio-9p-pci,fsdev=${share_uuid},mount_tag=${dir} "
+    fi
+  done
+fi
+
 
 : ${KVM_OPTS:="\
   -nodefaults \
@@ -400,6 +409,7 @@ if [[ "$ENABLE_DHCP" == 1 ]]; then
 fi
 
 log "INFO" "Launching qemu-kvm"
+log "DEBUG" "$SHARED_DIRS $SHARED_DIRS_OPTS"
 log "DEBUG" "$KVM_CPU_OPTS"
 log "DEBUG" "Launching $LAUNCHER $KVM_BLK_OPTS $CLOUD_INIT_OPTS $KVM_OPTS $KVM_VIDEO_OPTS $KVM_CPU_OPTS $KVM_ARGS $@ $KVM_NET_OPTS"
-eval exec $LAUNCHER $KVM_BLK_OPTS $CLOUD_INIT_OPTS $KVM_OPTS $KVM_VIDEO_OPTS $KVM_CPU_OPTS "$@" $KVM_NET_OPTS
+eval exec $LAUNCHER $KVM_BLK_OPTS $CLOUD_INIT_OPTS $KVM_OPTS $KVM_VIDEO_OPTS $KVM_CPU_OPTS $KVM_NET_OPTS $SHARED_DIRS_OPTS "$@"

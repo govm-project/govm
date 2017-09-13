@@ -34,6 +34,7 @@ func findPort() int {
 	return listen.Addr().(*net.TCPAddr).Port
 }
 
+//SaneImage is a helper function to perform various checks to the provided image.
 func SaneImage(path string) error {
 
 	// Test if the image file exists

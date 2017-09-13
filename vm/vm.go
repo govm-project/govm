@@ -37,6 +37,7 @@ type VM struct {
 	generateUserData bool                      `yaml:"userdata"`
 	containerID      string                    `yaml:"container-id"`
 	NetOpts          vmTypes.NetworkingOptions `yaml:"networking"`
+	Shares           []string                  `yaml:"shares"`
 }
 
 // CreateVM creates a new VM object
@@ -49,7 +50,8 @@ func CreateVM( // nolint: gocyclo
 	userData string,
 	size vmTypes.VMSize,
 	cloud, efi bool,
-	netOpts vmTypes.NetworkingOptions) VM {
+	netOpts vmTypes.NetworkingOptions,
+	shares []string) VM {
 
 	var vm VM
 	var err error
@@ -148,6 +150,30 @@ func CreateVM( // nolint: gocyclo
 			log.Fatal(err)
 		}
 		vm.SSHKey = string(key)
+	}
+
+	// Check if there are any VM Shares (shared directories) and validate them
+	// They must be separated by the ":" character as docker does.
+	if len(shares) > 0 {
+		for _, dir := range vm.Shares {
+			share := strings.Split(dir, ":")
+			// Validate if the host share exists
+			stat, err := os.Stat(share[0])
+			if err != nil {
+				log.WithFields(log.Fields{
+					"share": share[0],
+				}).Fatal("Host directory does not exists.")
+			}
+
+			// Validate if it's a directory
+			if !stat.IsDir() {
+				log.WithFields(log.Fields{
+					"share": share[0],
+				}).Fatal("Host field is not a directory.")
+			}
+
+		}
+		vm.Shares = shares
 	}
 
 	vm.NetOpts.IP = netOpts.IP
@@ -315,6 +341,19 @@ func (vm *VM) Launch() { // nolint: gocyclo
 		fmt.Sprintf(ImageMount, vm.ParentImage),
 		fmt.Sprintf(DataMount, vmDataDirectory),
 		fmt.Sprintf(MetadataMount, vmDataDirectory, MedatataFile),
+	}
+	// Append shares to defaultMountBinds if any.
+	// Append guest directory/ies to env (container's environment).
+	if len(vm.Shares) > 0 {
+		defaultMountBinds = append(defaultMountBinds, vm.Shares...)
+		var sharedDirs string
+		for _, share := range vm.Shares {
+			// Get the guest directory part from the string and pass
+			// it to the container environment. The "startvm" script
+			// will handle these shared directories.
+			sharedDirs += strings.Split(share, ":")[1] + " "
+		}
+		env = append(env, "SHARED_DIRS="+sharedDirs)
 	}
 
 	if vm.UserData != "" {
