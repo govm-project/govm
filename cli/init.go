@@ -1,10 +1,21 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/codegangsta/cli"
 )
 
+// Revision is used to print the commit hash when using the --version flag.
+// This variable must be modified with ldflag when building.
+var Revision string
+
 func Init() *cli.App {
+
+	// Modify default binary's version string
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Printf("version=%s revision=%s\n", c.App.Version, Revision)
+	}
 	vmCLI := cli.NewApp()
 	vmCLI.Name = "govm"
 	vmCLI.Usage = "VMs as you go"
