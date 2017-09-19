@@ -27,6 +27,11 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 	}
 
 	for _, vm := range c.VMs {
+		// If no working directory is specified in the compose file,
+		// use defaults.
+		if vm.Workdir == "" {
+			vm.Workdir = getWorkDir()
+		}
 		newVMTemplate.VMs = append(newVMTemplate.VMs,
 			vmLauncher.CreateVM(
 				vm.Name,
