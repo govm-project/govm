@@ -1,30 +1,26 @@
-# govm - A CLI for launching in-Container VMs (Virtual Machines)
+# Container VM Launcher
 
-NOTICE
-------
-This project is on intensive development. If you have issues when trying to use it, please let us know, we don't want to make you cry.
-
-Introduction
-------------
 ``govm`` is a Docker-based tool that will launch your pet VM inside docker containers. It will use Docker networking layer and will map it to your VM.
 
-Key Features
-------------
+**Key Features**
+
 - Uses Docker networking
 - Cloud Init support
 - Copy-on-write images
 - EFI support
 - Cloud-Init and RAW images support
 
-Requirements
----------------
+**Requirements**
+
 - Go 1.7+
 - Docker
 
-Get the project
----------------
+Build the project
+-----------------
 ```
-go get -u github.intel.com/clrgdc/govm/...
+git clone https://github.intel.com/clrgdc/govm.git
+cd govm/
+go build -o govm
 ```
 
 
@@ -37,20 +33,74 @@ curl -Ok https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-a
 govm create --image xenial-server-cloudimg-amd64-disk1.img --cloud
 ```
 
-**Output**
+
+Sub-commands
+============
+
+create
+------
+Creates a new Virtual Machine inside a privileged docker container.
+
+| Flag              | Description                                                     | Required |
+|-------------------|-----------------------------------------------------------------|----------|
+| --image value     | Path to image                                                   | Yes      |
+| --user-data value | Path to user data file                                          | No       |
+| --efi             | Use efi bootloader                                              | No       |
+| --cloud           | Create config-drive for cloud images                            | No       |
+| --flavor value    | VM specs descriptor                                             | Yes      |
+| --key value       | SSH key to be included in a cloud image                         | No       |
+| --name value      | VM name                                                         | No       |
+| --cpumodel value  | Model of the virtual cpu. See: ``qemu-system-x86_64 -cpu help`` | No       |
+| --sockets value   | Number of sockets. (default: 1)                                 | No       |
+| --cpus value      | Number of cpus (default: 1)                                     | No       |
+| --cores value     | Number of cores (default: 2)                                    | No       |
+| --threads value   | Number of threads (default: 2)                                  | No       |
+| --ram value       | Allocated RAM (default: 1024)                                   | No       |
+| --debug           | Debug mode                                                      | No       |
+
+remove
+------
+Removes a the whole privileged docker container and its virtual machine data.
+
+| Flag  | Description                                                                                     | Required |
+|-------|-------------------------------------------------------------------------------------------------|----------|
+| value | If the value (name of container) is specified, it will remove it. See: ``govm list`` to get name | Yes      |
+| --all | Removes all ``govm`` created virtual machines                                                    | No       |
+
+list
+----
+Lists all virtual machines that were created with the ``govm`` tool. It also shows the VNC access url and name.
+
+*Output example:*
 ```
-no vnc
-[hopeful_euler]
-IP Address: 172.17.0.4
+ID          IP           VNC_URL                 NAME
+bd0088a3eb  172.17.0.2   http://localhost:40669  clear-test
+db3ea1be1d  172.17.0.3   http://localhost:35957  cirros-test
+f8a4cd7e93  172.17.0.4   http://localhost:42161  test-30310
 ```
 
-# Log into your vm
-```
-ssh ubuntu@172.17.0.4
-```
+compose
+-------
+Deploys one or multiple virtual machines with a given compose template file.
 
-``govm`` help
--------------
+| Flag     | Description   | Required |
+|----------|---------------|----------|
+| -f value | Template file | Yes      |
+
+YAML template file example:
+- [2 VMs deployment](data/compose/example_v1.yml)
+
+connect
+-------
+Connects through ssh to the specified virtual machine.
+
+| Flag         | Description                               | Required |
+|--------------|-------------------------------------------|----------|
+| --user value | ssh login user                            | Yes      |
+| --key value  | private key path (default: ~/.ssh/id_rsa) | No       |
+
+help
+----
 
 ```
 NAME:
