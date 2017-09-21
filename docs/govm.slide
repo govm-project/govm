@@ -1,0 +1,73 @@
+GOVM: In-Container VM Launcher
+Advanced Systems Engineering Forum
+22 Sep 2017
+Tags: golang, docker, virtualization
+
+Erick Cardona Ruiz, Obed N Munoz
+
+* Agenda
+
+- What and Why is this trip?
+- Easy, fast and cool
+- Who __[was,is,shoud_be]_ using it?
+- Demo
+- More demos
+- Future Plans
+- Links
+
+
+* What and Why is this trip? (1/2)
+
+** Book's description
+This is the formal description
+
+
+* What and Why is this trip? (2/3)
+
+** Origins
+Once upon a time ...
+
+ RancherVM ---> BBVA/kvm ---> obedmr/govm ---> Intel/govm
+     |              |              |               |
+  2000 b.C.     1000 b.C.         2016            2017
+
+* What and Why is this trip? (2/3)
+** Key features
+- Written in Go :)
+- User Docker networking
+- Cloud-init support
+- QCOW and RAW images support
+- EFI support
+- Composing (Multiple VMs in a shot)
+- Shares (share multiple host directories with 9p)
+- Port forwarding (comming soon)
+
+* Easy, fast and cool (1/2)
+** Keep it simple
+
+* Easy, fast and cool (2/2)
+Here's where we're going to put some diagrams for the "pueblo"
+
+** Architecture
+
+*  Who [was,is,shoud be] using it?
+- CIAO
+- K8S in ClearLinux pathfinding
+- BBT 2.0 proposal
+- ClearContainers
+- ClearLinux folks
+
+* Demo
+- Create VM
+- List VMs
+- Remove VM
+
+* More Demos
+- Compose
+- Connect to VM
+
+* Future Plans
+- OpenSource (under PDT process)
+
+* Links
+.link https://github.intel.com/clrgdc/govm github.intel.com/clrgdc/govm
