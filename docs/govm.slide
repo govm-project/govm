@@ -7,7 +7,7 @@ Erick Cardona Ruiz, Obed N Munoz
 
 * Agenda
 
-- What and Why is this trip?
+- What and Why?
 - Easy, fast and cool
 - Who __[was,is,shoud_be]_ using it?
 - Demo
@@ -16,22 +16,38 @@ Erick Cardona Ruiz, Obed N Munoz
 - Links
 
 
-* What and Why is this trip? (1/2)
+* What and Why? (1/3)
 
 ** Book's description
-This is the formal description
+*govm* is a Docker-based tool that will launch your pet VM inside docker containers.
 
+It will use Docker networking layer and will map it to your VM.
 
-* What and Why is this trip? (2/3)
+Basically, it's command line tool that helps developers on launching development VMs without worrying about qemu commands or network settings.
+
+The only requirement is to have *Docker*.
+
+* What and Why? (2/3)
 
 ** Origins
-Once upon a time ...
 
  RancherVM ---> BBVA/kvm ---> obedmr/govm ---> Intel/govm
      |              |              |               |
   2000 b.C.     1000 b.C.         2016            2017
 
-* What and Why is this trip? (2/3)
+ RancherVM
+ - docker run --privileged .... (long command)
+
+   BBVA/kvm
+   - docker run --privileged ... (not too long command)
+
+     obedmr/govm
+     - govm --image ... (simple, short command)
+
+       Intel/govm
+       - govm create --image ... (sub-commands, compose, connect, shares, etc)
+
+* What and Why? (3/3)
 ** Key features
 - Written in Go :)
 - User Docker networking
@@ -42,13 +58,19 @@ Once upon a time ...
 - Shares (share multiple host directories with 9p)
 - Port forwarding (comming soon)
 
-* Easy, fast and cool (1/2)
-** Keep it simple
+* Easy, fast and cool (1/3)
+.image keep_it_simple.jpg
 
-* Easy, fast and cool (2/2)
-Here's where we're going to put some diagrams for the "pueblo"
+- Easy to install
+- Fast to play
+- and ... cool enough to come back
 
-** Architecture
+* Easy, fast and cool (2/3)
+*How* *it* *works*
+.image general_architecture.png
+
+* Easy, fast and cool (3/3)
+.image flow.png
 
 *  Who [was,is,shoud be] using it?
 - CIAO
@@ -61,13 +83,22 @@ Here's where we're going to put some diagrams for the "pueblo"
 - Create VM
 - List VMs
 - Remove VM
+.image demo.png
 
 * More Demos
 - Compose
-- Connect to VM
+- Connect
+.image demo.png
 
 * Future Plans
 - OpenSource (under PDT process)
+- Port forwarding (in-progress)
+- Improve logging / debugging
+- `govm` `save`
+- Improve UI experience (VNC)
 
 * Links
 .link https://github.intel.com/clrgdc/govm github.intel.com/clrgdc/govm
+.link https://github.intel.com/clrgdc/govm/issues github.intel.com/clrgdc/govm/issues
+.link https://github.com/rancher/vm github.com/rancher/vm
+.link https://github.com/BBVA/kvm github.com/BBVA/kvm
