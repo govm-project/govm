@@ -176,10 +176,14 @@ func CreateVM( // nolint: gocyclo
 		vm.Shares = shares
 	}
 
-	vm.NetOpts.IP = netOpts.IP
-	vm.NetOpts.MAC = netOpts.MAC
-	vm.NetOpts.NetID = netOpts.NetID
-	vm.NetOpts.DNS = netOpts.DNS
+	if vm.NetOpts.NetID != "" {
+		vm.NetOpts.IP = netOpts.IP
+		vm.NetOpts.MAC = netOpts.MAC
+		vm.NetOpts.NetID = netOpts.NetID
+		vm.NetOpts.DNS = netOpts.DNS
+	} else {
+	       vm.NetOpts.NetID = "bridge"
+	}
 
 	return vm
 }
