@@ -63,6 +63,9 @@ flycheck_*.el
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 
+vendor/
+govm
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/

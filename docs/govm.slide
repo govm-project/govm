@@ -31,7 +31,7 @@ The only requirement is to have *Docker*.
 
 ** Origins
 
- RancherVM ---> BBVA/kvm ---> obedmr/govm ---> Intel/govm
+ RancherVM ---> BBVA/kvm ---> obedmr/govm ---> govm-project/govm
      |              |              |               |
   2000 b.C.     1000 b.C.         2016            2017
 

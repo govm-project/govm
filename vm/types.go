@@ -1,7 +1,7 @@
 package vm
 
 import (
-	"github.intel.com/clrgdc/govm/docker"
+	"github.intel.com/clrgdc/govm/engines/docker"
 )
 
 //ComposeTemplate defines a VMs orchestration template

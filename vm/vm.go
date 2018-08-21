@@ -2,7 +2,6 @@ package vm
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,11 +13,10 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
 	"github.com/moby/moby/pkg/namesgenerator"
 	log "github.com/sirupsen/logrus"
 
-	"github.intel.com/clrgdc/govm/docker"
+	"github.intel.com/clrgdc/govm/engines/docker"
 	vmTypes "github.intel.com/clrgdc/govm/types"
 )
 
@@ -78,12 +76,11 @@ func CreateVM( // nolint: gocyclo
 		vm.Name = namesgenerator.GetRandomName(0)
 	}
 
-	ctx := context.Background()
-	cli, err := client.NewEnvClient()
+	client := docker.NewDockerClient()
 	if err != nil {
 		panic(err)
 	}
-	_, err = cli.ContainerInspect(ctx, name)
+	_, err = client.Inspect(name)
 	if err == nil {
 		log.Fatal("There is an existing container with the same name")
 	}
@@ -182,7 +179,7 @@ func CreateVM( // nolint: gocyclo
 		vm.NetOpts.NetID = netOpts.NetID
 		vm.NetOpts.DNS = netOpts.DNS
 	} else {
-	       vm.NetOpts.NetID = "bridge"
+		vm.NetOpts.NetID = "bridge"
 	}
 
 	return vm
@@ -190,33 +187,26 @@ func CreateVM( // nolint: gocyclo
 
 // ShowInfo shows VM's information
 func (vm *VM) ShowInfo() {
-	ctx := context.Background()
 
-	// Create the Docker API client
-	cli, err := client.NewEnvClient()
+	client := docker.NewDockerClient()
+	containerInfo, err := client.Inspect(vm.containerID)
 	if err != nil {
 		panic(err)
 	}
-
-	containerInfo, _ := cli.ContainerInspect(ctx, vm.containerID)
 	fmt.Printf("[%s]\nIP Address: %s\n", containerInfo.Name[1:],
 		containerInfo.NetworkSettings.DefaultNetworkSettings.IPAddress)
 
 }
 
 func (vm *VM) setVNC(vmName string, port string) error {
-	ctx := context.Background()
 
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		return err
-	}
-	err = docker.PullImage(ctx, cli, VNCContainerImage)
+	client := docker.NewDockerClient()
+	err := client.PullImage(VNCContainerImage)
 	if err != nil {
 		return err
 	}
 
-	err = docker.ContainerSearch(ctx, cli, VNCServerContainerName)
+	_, err = client.Search(VNCServerContainerName)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":     err.Error(),
@@ -240,7 +230,7 @@ func (vm *VM) setVNC(vmName string, port string) error {
 			NetworkMode:     "host",
 			Binds:           mountBinds,
 		}
-		_, err := docker.Run(ctx, cli, containerConfig, hostConfig,
+		_, err := client.Create(containerConfig, hostConfig,
 			&network.NetworkingConfig{}, VNCServerContainerName)
 		if err != nil {
 			fmt.Println(err)
@@ -258,7 +248,7 @@ func (vm *VM) setVNC(vmName string, port string) error {
 		Cmd:    execCmd,
 	}
 
-	err = docker.Exec(ctx, cli, VNCServerContainerName, execConfig)
+	err = client.Exec(VNCServerContainerName, execConfig)
 
 	return err
 }
@@ -266,8 +256,6 @@ func (vm *VM) setVNC(vmName string, port string) error {
 // Launch executes the required commands to launch a new VM
 // TODO: Reduce cyclomatic complexity
 func (vm *VM) Launch() { // nolint: gocyclo
-	ctx := context.Background()
-
 	// Create the data dir
 	vmDataDirectory := vm.Workdir + "/data/" + vm.Name
 	err := os.MkdirAll(vmDataDirectory, 0740) // nolint: gas
@@ -366,12 +354,8 @@ func (vm *VM) Launch() { // nolint: gocyclo
 	}
 
 	// Create the Docker API client
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		panic(err)
-	}
-
-	err = docker.PullImage(ctx, cli, VMLauncherContainerImage)
+	client := docker.NewDockerClient()
+	err = client.PullImage(VMLauncherContainerImage)
 	if err != nil {
 		panic(err)
 	}
@@ -413,7 +397,7 @@ func (vm *VM) Launch() { // nolint: gocyclo
 	}
 
 	// TODO - Proper error handling
-	vm.containerID, err = docker.Run(ctx, cli, containerConfig, hostConfig,
+	vm.containerID, err = client.Create(containerConfig, hostConfig,
 		networkConfig, vm.Name)
 	if err != nil {
 		log.Fatal(err)
