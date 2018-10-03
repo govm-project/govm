@@ -16,8 +16,8 @@ import (
 	"github.com/moby/moby/pkg/namesgenerator"
 	log "github.com/sirupsen/logrus"
 
-	"github.intel.com/clrgdc/govm/engines/docker"
-	vmTypes "github.intel.com/clrgdc/govm/types"
+	"github.com/govm-project/govm/engines/docker"
+	vmTypes "github.com/govm-project/govm/types"
 )
 
 var vncPort string

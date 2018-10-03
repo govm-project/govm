@@ -13,7 +13,7 @@ import (
 	"github.com/golang/glog"
 	log "github.com/sirupsen/logrus"
 
-	vmLauncher "github.intel.com/clrgdc/govm/vm"
+	vmLauncher "github.com/govm-project/govm/vm"
 )
 
 //NewVMTemplate creates a new VMTemplate object

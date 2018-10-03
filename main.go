@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.intel.com/clrgdc/govm/cli"
+	"github.com/govm-project/govm/cli"
 )
 
 func main() {

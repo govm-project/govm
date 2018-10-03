@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.intel.com/clrgdc/govm/types"
+	"github.com/govm-project/govm/types"
 )
 
 //NewVMSize creates a new VMSize specification

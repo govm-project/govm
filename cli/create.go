@@ -9,8 +9,8 @@ import (
 	"github.com/codegangsta/cli"
 	log "github.com/sirupsen/logrus"
 
-	"github.intel.com/clrgdc/govm/types"
-	"github.intel.com/clrgdc/govm/vm"
+	"github.com/govm-project/govm/types"
+	"github.com/govm-project/govm/vm"
 )
 
 func create() cli.Command {

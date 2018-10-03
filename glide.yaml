@@ -1,4 +1,4 @@
-package: github.intel.com/clrgdc/govm
+package: github.com/govm-project/govm
 import:
 - package: github.com/codegangsta/cli
   version: ^1.20.0

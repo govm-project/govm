@@ -98,7 +98,7 @@ The only requirement is to have *Docker*.
 - Improve UI experience (VNC)
 
 * Links
-.link https://github.intel.com/clrgdc/govm github.intel.com/clrgdc/govm
-.link https://github.intel.com/clrgdc/govm/issues github.intel.com/clrgdc/govm/issues
+.link https://github.com/govm-project/govm github.com/govm-project/govm
+.link https://github.com/govm-project/govm/issues github.com/govm-project/govm/issues
 .link https://github.com/rancher/vm github.com/rancher/vm
 .link https://github.com/BBVA/kvm github.com/BBVA/kvm

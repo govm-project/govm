@@ -18,7 +18,7 @@
 Build the project
 -----------------
 ```
-git clone https://github.intel.com/clrgdc/govm.git
+git clone https://github.com/govm-project/govm.git
 cd govm/
 go build -o govm
 ```
@@ -137,4 +137,4 @@ based on https://github.com/BBVA/kvm
 Questions, issues or suggestions
 --------------------------------
 
-http://github.intel.com/clrgdc/govm/issues
+http://github.com/govm-project/govm/issues

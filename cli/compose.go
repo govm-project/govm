@@ -10,7 +10,7 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	"github.intel.com/clrgdc/govm/vm"
+	"github.com/govm-project/govm/vm"
 )
 
 func compose() cli.Command {
