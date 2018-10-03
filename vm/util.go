@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 )
 
 // helper function to find a tcp port

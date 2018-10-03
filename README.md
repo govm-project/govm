@@ -12,12 +12,14 @@
 
 **Requirements**
 
-- Go 1.7+
+- Go 1.11+
 - Docker
 
 Build the project
 -----------------
 ```
+export GO111MODULE=on
+mkdir -p $GOPATH/src/github.com/
 git clone https://github.com/govm-project/govm.git
 cd govm/
 go build -o govm

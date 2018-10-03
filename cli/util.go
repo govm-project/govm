@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/golang/glog"
-	log "github.com/sirupsen/logrus"
 
 	vmLauncher "github.com/govm-project/govm/vm"
 )
