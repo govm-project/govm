@@ -32,6 +32,11 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 		if vm.Workdir == "" {
 			vm.Workdir = getWorkDir()
 		}
+		// Check if any flavor is provided
+
+		if vm.Flavor != "" {
+			vm.Size = vmLauncher.GetVMSizeFromFlavor(vm.Flavor)
+		}
 		newVMTemplate.VMs = append(newVMTemplate.VMs,
 			vmLauncher.CreateVM(
 				vm.Name,

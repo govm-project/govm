@@ -71,11 +71,11 @@ func GetVMSizeFromFlavor(flavor string) types.VMSize {
 	case "small":
 		size = NewVMSize(cpuModel, 1, 1, 2, 1, 2048)
 	case "medium":
-		size = NewVMSize(cpuModel, 1, 1, 2, 2, 4096)
+		size = NewVMSize(cpuModel, 2, 2, 2, 2, 4096)
 	case "large":
-		size = NewVMSize(cpuModel, 1, 1, 2, 2, 8192)
+		size = NewVMSize(cpuModel, 1, 4, 4, 4, 8192)
 	default:
-		size = NewVMSize(cpuModel, 1, 1, 2, 2, 4096)
+		size = NewVMSize(cpuModel, 2, 2, 2, 2, 4096)
 	}
 	return size
 }

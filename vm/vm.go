@@ -26,6 +26,7 @@ var vncPort string
 type VM struct {
 	Name             string                    `yaml:"name"`
 	ParentImage      string                    `yaml:"image"`
+	Flavor           string                    `yaml:"flavor"`
 	Size             vmTypes.VMSize            `yaml:"size"`
 	Workdir          string                    `yaml:"workdir"`
 	SSHKey           string                    `yaml:"sshkey"`
@@ -127,7 +128,7 @@ func CreateVM( // nolint: gocyclo
 	if size != (vmTypes.VMSize{}) {
 		vm.Size = size
 	} else {
-		vm.Size = GetVMSizeFromFlavor("")
+		vm.Size = GetVMSizeFromFlavor(vm.Flavor)
 	}
 
 	vm.Efi = efi
