@@ -8,5 +8,5 @@ const (
 
 // Container Images
 const (
-	VMLauncherContainerImage = "vmgo/vmgo"
+	VMLauncherContainerImage = "govm/govm"
 )

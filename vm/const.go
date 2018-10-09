@@ -2,8 +2,8 @@ package vm
 
 // Container Images
 const (
-	VMLauncherContainerImage = "vmgo/vmgo"
-	VNCContainerImage        = "vmgo/novnc-server"
+	VMLauncherContainerImage = "govm/govm"
+	VNCContainerImage        = "govm/novnc-server"
 )
 
 // Default VM Launcher containers' names
