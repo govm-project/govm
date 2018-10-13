@@ -7,13 +7,17 @@ import (
 	"strings"
 
 	"github.com/codegangsta/cli"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/govm-project/govm/types"
+	"github.com/govm-project/govm/utils"
 	"github.com/govm-project/govm/vm"
+	log "github.com/sirupsen/logrus"
 )
 
 func create() cli.Command {
+	defaultNamespace, err := utils.DefaultNamespace()
+	if err != nil {
+		log.Fatalf("get default namespace: %v", err)
+	}
 	command := cli.Command{
 		Name:      "create",
 		Aliases:   []string{"c"},
@@ -51,6 +55,11 @@ func create() cli.Command {
 				Name:  "name",
 				Value: "",
 				Usage: "vm name",
+			},
+			cli.StringFlag{
+				Name:  "namespace",
+				Value: defaultNamespace,
+				Usage: "vm namespace",
 			},
 			cli.StringFlag{
 				Name:  "cpumodel",
@@ -148,6 +157,7 @@ func create() cli.Command {
 			}
 			newVM := vm.CreateVM(
 				c.String("name"),
+				c.String("namespace"),
 				parentImage,
 				workDir,
 				c.String("key"),

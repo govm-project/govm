@@ -11,9 +11,8 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/golang/glog"
-	log "github.com/sirupsen/logrus"
-
 	vmLauncher "github.com/govm-project/govm/vm"
+	log "github.com/sirupsen/logrus"
 )
 
 //NewVMTemplate creates a new VMTemplate object
@@ -40,6 +39,7 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 		newVMTemplate.VMs = append(newVMTemplate.VMs,
 			vmLauncher.CreateVM(
 				vm.Name,
+				vm.Namespace,
 				vm.ParentImage,
 				vm.Workdir,
 				vm.SSHKey,
