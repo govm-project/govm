@@ -11,10 +11,15 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/govm-project/govm/utils"
 	log "github.com/sirupsen/logrus"
 )
 
 func remove() cli.Command {
+	defeaultNamespace, err := utils.DefaultNamespace()
+	if err != nil {
+		log.Fatalf("get default namespace: %v", err)
+	}
 	command := cli.Command{
 		Name:    "remove",
 		Aliases: []string{"d"},
@@ -23,6 +28,11 @@ func remove() cli.Command {
 			cli.BoolFlag{
 				Name:  "all",
 				Usage: "Remove all vms",
+			},
+			cli.StringFlag{
+				Name:  "namespace",
+				Value: defaultNamespace,
+				Usage: "list VMs from this namespace",
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -38,13 +48,17 @@ func remove() cli.Command {
 				fmt.Printf("USAGE:\n govm remove [command options] [name]\n")
 				os.Exit(1)
 			}
+
+			namespace := c.String("namespace")
+
 			name = c.Args().First()
+			contName := utils.GenerateContainerName(namespace, name)
 			ctx := context.Background()
 			cli, err := client.NewEnvClient()
 			if err != nil {
 				panic(err)
 			}
-			containerJSON, err := cli.ContainerInspect(ctx, name)
+			containerJSON, err := cli.ContainerInspect(ctx, contName)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -65,7 +79,7 @@ func remove() cli.Command {
 				}
 			}
 
-			err = cli.ContainerRemove(ctx, name,
+			err = cli.ContainerRemove(ctx, contName,
 				types.ContainerRemoveOptions{
 					RemoveVolumes: false,
 					RemoveLinks:   false,

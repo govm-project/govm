@@ -13,11 +13,10 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
-	"github.com/moby/moby/pkg/namesgenerator"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/govm-project/govm/engines/docker"
 	vmTypes "github.com/govm-project/govm/types"
+	"github.com/govm-project/govm/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 var vncPort string
@@ -25,6 +24,7 @@ var vncPort string
 //VM contains all VM's attributes
 type VM struct {
 	Name             string                    `yaml:"name"`
+	Namespace        string                    `yaml:"namespace"`
 	ParentImage      string                    `yaml:"image"`
 	Flavor           string                    `yaml:"flavor"`
 	Size             vmTypes.VMSize            `yaml:"size"`
@@ -43,6 +43,7 @@ type VM struct {
 // TODO: Reduce cyclomatic complexity
 func CreateVM( // nolint: gocyclo
 	name,
+	namespace,
 	parentImage,
 	workdir,
 	publicKey,
@@ -74,14 +75,18 @@ func CreateVM( // nolint: gocyclo
 	if name != "" {
 		vm.Name = name
 	} else {
-		vm.Name = namesgenerator.GetRandomName(0)
+		vm.Name = utils.RandomName()
 	}
+
+	vm.Namespace = namespace
+
+	containerName := utils.GenerateContainerName(namespace, name)
 
 	client := docker.NewDockerClient()
 	if err != nil {
 		panic(err)
 	}
-	_, err = client.Inspect(name)
+	_, err = client.Inspect(containerName)
 	if err == nil {
 		log.Fatal("There is an existing container with the same name")
 	}
@@ -370,6 +375,8 @@ func (vm *VM) Launch() { // nolint: gocyclo
 		Labels: map[string]string{
 			"websockifyPort": vncPort,
 			"dataDir":        vmDataDirectory,
+			"namespace":      vm.Namespace,
+			"vmName":         vm.Name,
 		},
 	}
 
@@ -396,7 +403,7 @@ func (vm *VM) Launch() { // nolint: gocyclo
 
 	// TODO - Proper error handling
 	vm.containerID, err = client.Create(containerConfig, hostConfig,
-		networkConfig, vm.Name)
+		networkConfig, utils.GenerateContainerName(vm.Namespace, vm.Name))
 	if err != nil {
 		log.Fatal(err)
 	}
