@@ -16,7 +16,7 @@ import (
 )
 
 func remove() cli.Command {
-	defeaultNamespace, err := utils.DefaultNamespace()
+	defaultNamespace, err := utils.DefaultNamespace()
 	if err != nil {
 		log.Fatalf("get default namespace: %v", err)
 	}
