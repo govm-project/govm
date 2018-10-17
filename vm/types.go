@@ -6,6 +6,7 @@ import (
 
 //ComposeTemplate defines a VMs orchestration template
 type ComposeTemplate struct {
-	VMs      []VM             `yaml:"vms"`
-	Networks []docker.Network `yaml:"networks"`
+	VMs       []VM             `yaml:"vms"`
+	Networks  []docker.Network `yaml:"networks"`
+	Namespace string           `yaml:"namespace"`
 }
