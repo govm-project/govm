@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/golang/glog"
+	"github.com/govm-project/govm/utils"
 	vmLauncher "github.com/govm-project/govm/vm"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,21 +26,37 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 		panic(err)
 	}
 
+	globalNamespace := c.Namespace
+	if globalNamespace == "" {
+		defaultNamespace, err := utils.DefaultNamespace()
+		if err != nil {
+			log.Fatalf("get default namespace: %v", err)
+		}
+		globalNamespace = defaultNamespace
+	}
+
 	for _, vm := range c.VMs {
 		// If no working directory is specified in the compose file,
 		// use defaults.
 		if vm.Workdir == "" {
 			vm.Workdir = getWorkDir()
 		}
-		// Check if any flavor is provided
 
+		// Check if any flavor is provided
 		if vm.Flavor != "" {
 			vm.Size = vmLauncher.GetVMSizeFromFlavor(vm.Flavor)
 		}
+
+		// Check if a namespace was given.
+		namespace := vm.Namespace
+		if namespace == "" {
+			namespace = globalNamespace
+		}
+
 		newVMTemplate.VMs = append(newVMTemplate.VMs,
 			vmLauncher.CreateVM(
 				vm.Name,
-				vm.Namespace,
+				namespace,
 				vm.ParentImage,
 				vm.Workdir,
 				vm.SSHKey,
