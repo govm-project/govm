@@ -26,13 +26,13 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 		panic(err)
 	}
 
-	globalNamespace := c.Namespace
-	if globalNamespace == "" {
-		defaultNamespace, err := utils.DefaultNamespace()
+	defaultNamespace := c.Namespace
+	if defaultNamespace == "" {
+		var err error
+		defaultNamespace, err = utils.DefaultNamespace()
 		if err != nil {
 			log.Fatalf("get default namespace: %v", err)
 		}
-		globalNamespace = defaultNamespace
 	}
 
 	for _, vm := range c.VMs {
@@ -50,7 +50,7 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 		// Check if a namespace was given.
 		namespace := vm.Namespace
 		if namespace == "" {
-			namespace = globalNamespace
+			namespace = defaultNamespace
 		}
 
 		newVMTemplate.VMs = append(newVMTemplate.VMs,
