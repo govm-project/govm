@@ -52,6 +52,7 @@ Creates a new Virtual Machine inside a privileged docker container.
 | --flavor value    | VM specs descriptor                                             | Yes      |
 | --key value       | SSH key to be included in a cloud image                         | No       |
 | --name value      | VM name                                                         | No       |
+| --namespace value | VM namespace (this will normally be the user's username)        | No       |
 | --cpumodel value  | Model of the virtual cpu. See: ``qemu-system-x86_64 -cpu help`` | No       |
 | --sockets value   | Number of sockets. (default: 1)                                 | No       |
 | --cpus value      | Number of cpus (default: 1)                                     | No       |
@@ -72,6 +73,11 @@ Removes a the whole privileged docker container and its virtual machine data.
 list
 ----
 Lists all virtual machines that were created with the ``govm`` tool. It also shows the VNC access url and name.
+
+| Flag              | Description                       | Required |
+|-------------------|-----------------------------------|----------|
+| --all             | Show VMs from all namespaces      | No       |
+| --namespace value | Show VMs from the given namespace | No       |
 
 *Output example:*
 ```
