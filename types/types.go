@@ -1,5 +1,7 @@
 package types
 
+import "github.com/docker/go-connections/nat"
+
 //ConfigDriveMetaData stands for cloud images config drive
 type ConfigDriveMetaData struct {
 	AvailabilityZone string            `json:"availavility_zone"`
@@ -27,4 +29,9 @@ type VMSize struct {
 	Cores    int    `yaml:"cores"`
 	Threads  int    `yaml:"threads"`
 	RAM      int    `yaml:"ram"`
+}
+
+type PortOptions struct {
+	PortSet      nat.PortSet
+	PortBindings nat.PortMap
 }

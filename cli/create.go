@@ -99,6 +99,10 @@ func create() cli.Command {
 				Name:  "share",
 				Usage: "Share directories. e.g. --share /host/path:/guest/path",
 			},
+			cli.StringSliceFlag{
+				Name:  "port",
+				Usage: "Expose ports. e.g. --port 8080:8080",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			var parentImage string
@@ -150,6 +154,18 @@ func create() cli.Command {
 
 				}
 			}
+			ports := c.StringSlice("port")
+			if len(ports) > 0 {
+				for _, port := range ports {
+					portSlice := strings.Split(port, ":")
+					if len(portSlice) != 2 {
+						log.Fatal("Wrong port format: " + port +
+							"\nUsage: --port \"hostPort\":\"guestPort\"")
+					}
+
+				}
+
+			}
 
 			workDir := c.String("workdir")
 			if workDir == "" {
@@ -167,6 +183,7 @@ func create() cli.Command {
 				c.Bool("efi"),
 				types.NetworkingOptions{},
 				c.StringSlice("share"),
+				ports,
 			)
 			newVM.Launch()
 			newVM.ShowInfo()

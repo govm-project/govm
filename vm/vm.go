@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/go-connections/nat"
 	"github.com/govm-project/govm/engines/docker"
 	vmTypes "github.com/govm-project/govm/types"
 	"github.com/govm-project/govm/utils"
@@ -37,6 +38,8 @@ type VM struct {
 	containerID      string                    `yaml:"container-id"`
 	NetOpts          vmTypes.NetworkingOptions `yaml:"networking"`
 	Shares           []string                  `yaml:"shares"`
+	ExposedPorts     []string                  `yaml:"ports"`
+	PortOpts         vmTypes.PortOptions
 }
 
 // CreateVM creates a new VM object
@@ -51,7 +54,8 @@ func CreateVM( // nolint: gocyclo
 	size vmTypes.VMSize,
 	cloud, efi bool,
 	netOpts vmTypes.NetworkingOptions,
-	shares []string) VM {
+	shares []string,
+	exposedPorts []string) VM {
 
 	var vm VM
 	var err error
@@ -183,6 +187,15 @@ func CreateVM( // nolint: gocyclo
 	if vm.NetOpts.NetID == "" {
 		vm.NetOpts.NetID = "bridge"
 		vm.NetOpts.IP = ""
+	}
+
+	vm.ExposedPorts = exposedPorts
+	if vm.ExposedPorts != nil {
+		vm.PortOpts.PortSet, vm.PortOpts.PortBindings, err = nat.ParsePortSpecs(vm.ExposedPorts)
+		if err != nil {
+			log.Error(err)
+		}
+
 	}
 
 	return vm
@@ -378,6 +391,7 @@ func (vm *VM) Launch() { // nolint: gocyclo
 			"namespace":      vm.Namespace,
 			"vmName":         vm.Name,
 		},
+		ExposedPorts: vm.PortOpts.PortSet,
 	}
 
 	hostConfig := &container.HostConfig{
@@ -385,6 +399,7 @@ func (vm *VM) Launch() { // nolint: gocyclo
 		PublishAllPorts: true,
 		Binds:           defaultMountBinds,
 		DNS:             vm.NetOpts.DNS,
+		PortBindings:    vm.PortOpts.PortBindings,
 	}
 
 	if vm.NetOpts.IP != "" {
