@@ -1,4 +1,5 @@
 # Container VM Launcher
+[![Build Status](https://semaphoreci.com/api/v1/govm/govm/branches/master/badge.svg)](https://semaphoreci.com/govm/govm)
 
 ``govm`` is a Docker-based tool that will launch your pet VM inside docker containers. It will use Docker networking layer and will map it to your VM.
 
