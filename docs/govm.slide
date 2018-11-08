@@ -1,0 +1,104 @@
+GOVM: In-Container VM Launcher
+Advanced Systems Engineering Forum
+22 Sep 2017
+Tags: golang, docker, virtualization
+
+Erick Cardona Ruiz, Obed N Munoz
+
+* Agenda
+
+- What and Why?
+- Easy, fast and cool
+- Who __[was,is,shoud_be]_ using it?
+- Demo
+- More demos
+- Future Plans
+- Links
+
+
+* What and Why? (1/3)
+
+** Book's description
+*govm* is a Docker-based tool that will launch your pet VM inside docker containers.
+
+It will use Docker networking layer and will map it to your VM.
+
+Basically, it's command line tool that helps developers on launching development VMs without worrying about qemu commands or network settings.
+
+The only requirement is to have *Docker*.
+
+* What and Why? (2/3)
+
+** Origins
+
+ RancherVM ---> BBVA/kvm ---> obedmr/govm ---> govm-project/govm
+     |              |              |               |
+  2000 b.C.     1000 b.C.         2016            2017
+
+ RancherVM
+ - docker run --privileged .... (long command)
+
+   BBVA/kvm
+   - docker run --privileged ... (not too long command)
+
+     obedmr/govm
+     - govm --image ... (simple, short command)
+
+       Intel/govm
+       - govm create --image ... (sub-commands, compose, connect, shares, etc)
+
+* What and Why? (3/3)
+** Key features
+- Written in Go :)
+- User Docker networking
+- Cloud-init support
+- QCOW and RAW images support
+- EFI support
+- Composing (Multiple VMs in a shot)
+- Shares (share multiple host directories with 9p)
+- Port forwarding (comming soon)
+
+* Easy, fast and cool (1/3)
+.image keep_it_simple.jpg
+
+- Easy to install
+- Fast to play
+- and ... cool enough to come back
+
+* Easy, fast and cool (2/3)
+*How* *it* *works*
+.image general_architecture.png
+
+* Easy, fast and cool (3/3)
+.image flow.png
+
+*  Who [was,is,shoud be] using it?
+- CIAO
+- K8S in ClearLinux pathfinding
+- BBT 2.0 proposal
+- ClearContainers
+- ClearLinux folks
+
+* Demo
+- Create VM
+- List VMs
+- Remove VM
+.image demo.png
+
+* More Demos
+- Compose
+- Connect
+.image demo.png
+
+* Future Plans
+- OpenSource (under PDT process)
+- Port forwarding (in-progress)
+- Improve logging / debugging
+- `govm` `save`
+- Improve UI experience (VNC)
+
+* Links
+.link https://github.com/govm-project/govm github.com/govm-project/govm
+.link https://github.com/govm-project/govm/issues github.com/govm-project/govm/issues
+.link https://github.com/rancher/vm github.com/rancher/vm
+.link https://github.com/BBVA/kvm github.com/BBVA/kvm

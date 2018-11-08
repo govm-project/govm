@@ -1,0 +1,27 @@
+---
+networks:
+  - name: test
+    subnet: 192.168.200.0/24
+
+vms:
+  - name: vmOne
+    image: /home/user/govm/images/fedora-25-cloud.img
+    cloud: true
+    sshkey: /home/user/.ssh/id_rsa.pub
+    user-data: |
+      #!/bin/bash
+      dnf install emacs-nox
+    networking:
+      net-id: test
+      ip: 192.168.200.10
+
+  - name: vmTwo
+    image: /home/user/govm/images/fedora-25-cloud.img
+    cloud: true
+    sshkey: /home/user/.ssh/id_rsa.pub
+    user-data: |
+      #!/bin/bash
+      dnf install emacs-nox
+    networking:
+      net-id: test
+      ip: 192.168.200.20

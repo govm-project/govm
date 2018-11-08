@@ -1,0 +1,10 @@
+#cloud-config
+users:
+  - name: cloud
+    gecos: Cloud user
+    homedir: /home/cloud
+    passwd: $1$epale$acVxsHSUEzmBlbcPkr74L/
+    sudo:
+      - ALL=(ALL) NOPASSWD:ALL
+    ssh-authorized-keys:
+      - YOUR-PUBLIC-KEY-GOES-HERE
