@@ -35,7 +35,7 @@ type VM struct {
 	Efi              bool                      `yaml:"efi"`
 	generateUserData bool                      `yaml:"userdata"`
 	containerID      string                    `yaml:"container-id"`
-	NetOpts          vmTypes.NetworkingOptions `yaml:"networking"`
+	NetOpts          vmTypes.NetworkingOptions `yaml:"network"`
 	Shares           []string                  `yaml:"shares"`
 }
 
@@ -394,7 +394,7 @@ func (vm *VM) Launch() { // nolint: gocyclo
 	networkConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
 			vm.NetOpts.NetID: {
-				IPAddress:  vm.NetOpts.IP,
+				IPAMConfig: &network.EndpointIPAMConfig{IPv4Address: vm.NetOpts.IP},
 				MacAddress: vm.NetOpts.MAC,
 				NetworkID:  vm.NetOpts.NetID,
 			},
