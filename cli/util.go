@@ -83,7 +83,10 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 				CheckDuplicate: true,
 				IPAM: &network.IPAM{
 					Config: []network.IPAMConfig{
-						{Subnet: net.Subnet},
+						{
+							Subnet:  net.Subnet,
+							Gateway: getGateway(net.Subnet),
+						},
 					},
 				},
 				Options: map[string]string{
@@ -102,6 +105,12 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 	}
 
 	return newVMTemplate
+}
+
+func getGateway(subnet string) string {
+	parts := strings.Split(subnet, ".")
+	gateway := strings.Join(parts[:len(parts)-1], ".")
+	return fmt.Sprintf("%v.1", gateway)
 }
 
 func getHomeDir() string {
