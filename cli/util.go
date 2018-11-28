@@ -72,6 +72,7 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 				vm.Efi,
 				vm.NetOpts,
 				vm.Shares,
+				vm.ContainerEnvVars,
 			),
 		)
 	}

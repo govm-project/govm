@@ -99,6 +99,10 @@ func create() cli.Command {
 				Name:  "share",
 				Usage: "Share directories. e.g. --share /host/path:/guest/path",
 			},
+			cli.StringSliceFlag{
+				Name:  "container-env",
+				Usage: "Environment variable. e.g. --container-env http_proxy=$http_proxy",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			var parentImage string
@@ -167,6 +171,7 @@ func create() cli.Command {
 				c.Bool("efi"),
 				types.NetworkingOptions{},
 				c.StringSlice("share"),
+				c.StringSlice("container-env"),
 			)
 			newVM.Launch()
 			newVM.ShowInfo()
