@@ -37,6 +37,7 @@ type VM struct {
 	containerID      string                    `yaml:"container-id"`
 	NetOpts          vmTypes.NetworkingOptions `yaml:"network"`
 	Shares           []string                  `yaml:"shares"`
+	ContainerEnvVars []string                  `yaml:"ContainerEnvVars"`
 }
 
 // CreateVM creates a new VM object
@@ -51,7 +52,8 @@ func CreateVM( // nolint: gocyclo
 	size vmTypes.VMSize,
 	cloud, efi bool,
 	netOpts vmTypes.NetworkingOptions,
-	shares []string) VM {
+	shares []string,
+	containerEnvVars []string) VM {
 
 	var vm VM
 	var err error
@@ -178,6 +180,8 @@ func CreateVM( // nolint: gocyclo
 		}
 		vm.Shares = shares
 	}
+
+	vm.ContainerEnvVars = containerEnvVars
 
 	vm.NetOpts = netOpts
 	if vm.NetOpts.NetID == "" {
@@ -314,6 +318,7 @@ func (vm *VM) Launch() { // nolint: gocyclo
 			vm.Size.RAM,
 		),
 	}
+	env = append(env, vm.ContainerEnvVars...)
 
 	//if hostDNS {
 	//	env = append(env, "ENABLE_DHCP=no")
@@ -358,9 +363,12 @@ func (vm *VM) Launch() { // nolint: gocyclo
 
 	// Create the Docker API client
 	client := docker.NewDockerClient()
-	err = client.PullImage(VMLauncherContainerImage)
-	if err != nil {
-		panic(err)
+
+	if !client.ImageExists(VMLauncherContainerImage) {
+		err = client.PullImage(VMLauncherContainerImage)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// Get an available port for VNC
@@ -397,6 +405,7 @@ func (vm *VM) Launch() { // nolint: gocyclo
 				IPAMConfig: &network.EndpointIPAMConfig{IPv4Address: vm.NetOpts.IP},
 				MacAddress: vm.NetOpts.MAC,
 				NetworkID:  vm.NetOpts.NetID,
+				IPAddress:  vm.NetOpts.IP,
 			},
 		},
 	}

@@ -80,6 +80,16 @@ func (d *Docker) Search(name string) (types.Container, error) {
 	return types.Container{}, err
 }
 
+// ImageExists verifies that an image exists in the local docker registry
+func (d *Docker) ImageExists(name string) bool {
+	images, err := d.client.ImageSearch(d.ctx, name, types.ImageSearchOptions{Limit: 1})
+	if err != nil || len(images) == 0 {
+		fmt.Printf("ERROR: %v\n", err)
+		return false
+	}
+	return true
+}
+
 // Start starts a previously created container.
 func (d *Docker) Start(name string) error {
 
