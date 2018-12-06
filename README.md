@@ -21,7 +21,8 @@ Build the project
 -----------------
 ```
 export GO111MODULE=on
-mkdir -p $GOPATH/src/github.com/
+mkdir -p $GOPATH/src/github.com/govm-project/
+cd $GOPATH/src/github.com/govm-project/
 git clone https://github.com/govm-project/govm.git
 cd govm/
 go build -o govm
@@ -65,7 +66,7 @@ Creates a new Virtual Machine inside a privileged docker container.
 
 remove
 ------
-Removes a the whole privileged docker container and its virtual machine data.
+Removes the whole privileged docker container and its virtual machine data.
 
 | Flag  | Description                                                                                     | Required |
 |-------|-------------------------------------------------------------------------------------------------|----------|
@@ -139,7 +140,7 @@ GLOBAL OPTIONS:
 More cloud init stuff?
 ----------------------
 
-If you want to boot cloud images, edit the template files under $HOME/govm/cloud-init/openstack/latest/ to fit your own needs and use the `-cloud` flag.
+If you want to boot cloud images, edit the template files under $HOME/govm/cloud-init/openstack/latest/ to fit your own needs and use the `--cloud` flag.
 For more information, please see the cloud-init documentation: https://cloudinit.readthedocs.io/en/latest/
 
 based on https://github.com/BBVA/kvm
