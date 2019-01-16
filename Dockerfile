@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine
 MAINTAINER obed.n.munoz@gmail.com, erick.cardona.ruiz@gmail.com
 ENV container docker
 
