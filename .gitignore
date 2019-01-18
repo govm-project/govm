@@ -53,6 +53,7 @@ flycheck_*.el
 *.dll
 *.so
 *.dylib
+*.sum
 
 # Test binary, build with `go test -c`
 *.test
