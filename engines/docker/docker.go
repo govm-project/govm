@@ -1,13 +1,18 @@
 package docker
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -19,7 +24,9 @@ type Docker struct {
 
 // NewDockerClient returns a new Docker service client.
 func NewDockerClient() *Docker {
-	cli, err := client.NewEnvClient()
+
+	SetAPIVersion()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
 	}
@@ -105,4 +112,19 @@ func (d *Docker) Start(name string) error {
 // Inspect inspects and return details about an specific container.
 func (d *Docker) Inspect(ID string) (types.ContainerJSON, error) {
 	return d.client.ContainerInspect(d.ctx, ID)
+}
+
+// SetAPIVersion gets local docker server API version.
+// TODO: Investigate how we can replace the exec.Command approach
+func SetAPIVersion() {
+	cmd := exec.Command("docker", "version", "--format", "{{.Server.APIVersion}}")
+	cmdOutput := &bytes.Buffer{}
+	cmd.Stdout = cmdOutput
+
+	err := cmd.Run()
+	if err != nil {
+		log.Fatalf("Error getting Docker Server API version: %v", err)
+	}
+	apiVersion := strings.TrimSpace(string(cmdOutput.Bytes()))
+	_ = os.Setenv("DOCKER_API_VERSION", apiVersion)
 }

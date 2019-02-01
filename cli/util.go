@@ -7,12 +7,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/govm-project/govm/engines/docker"
+	"github.com/govm-project/govm/utils"
+	vmLauncher "github.com/govm-project/govm/vm"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/golang/glog"
-	"github.com/govm-project/govm/utils"
-	vmLauncher "github.com/govm-project/govm/vm"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,7 +23,9 @@ func NewVMTemplate(c *vmLauncher.ComposeTemplate) vmLauncher.ComposeTemplate {
 	var newVMTemplate vmLauncher.ComposeTemplate
 
 	ctx := context.Background()
-	cli, err := client.NewEnvClient()
+	// TODO: Replace it when docker engine is properly addressed
+	docker.SetAPIVersion()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
 	}

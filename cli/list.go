@@ -6,6 +6,8 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/govm-project/govm/engines/docker"
+
 	"github.com/codegangsta/cli"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -38,7 +40,9 @@ func list() cli.Command {
 		Action: func(c *cli.Context) error {
 			var containerIP string
 
-			cli, err := client.NewEnvClient()
+			// TODO: Replace it when docker engine is properly addressed
+			docker.SetAPIVersion()
+			cli, err := client.NewClientWithOpts(client.FromEnv)
 			if err != nil {
 				panic(err)
 			}

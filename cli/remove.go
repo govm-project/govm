@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/govm-project/govm/engines/docker"
+
 	"github.com/codegangsta/cli"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -54,7 +56,9 @@ func remove() cli.Command {
 			name = c.Args().First()
 			contName := utils.GenerateContainerName(namespace, name)
 			ctx := context.Background()
-			cli, err := client.NewEnvClient()
+			// TODO: Replace it when docker engine is properly addressed
+			docker.SetAPIVersion()
+			cli, err := client.NewClientWithOpts(client.FromEnv)
 			if err != nil {
 				panic(err)
 			}
