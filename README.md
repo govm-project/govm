@@ -20,16 +20,17 @@
 
 Quick Install (GNU/Linux based distribution)
 -------------------------------------------
+
+1. Download the latest `govm` release from https://github.com/govm-project/govm/releases/latest
+2. Install it
 ```
-curl -LOk https://github.com/govm-project/govm/releases/download/latest/govm_latest_linux_amd64.tar.gz
-tar -xzvf govm_latest_linux_amd64.tar.gz
+tar -xzvf govm_<latest_govm_release>_linux_amd64.tar.gz
 sudo cp govm /usr/local/bin/
 
 # Make sure you have `/usr/local/bin` in your PATH, if not, run this command
 # export PATH=/usr/local/bin/$PATH
 ```
-
-**All releases at:**  [releases page](https://github.com/govm-project/govm/releases).
+3. Done, you're ready to go.
 
 
 Build your own `govm`
