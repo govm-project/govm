@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/user"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -37,6 +39,10 @@ func findPort() int {
 //SaneImage is a helper function to perform various checks to the provided image.
 func SaneImage(path string) error {
 
+	if strings.HasPrefix(path, "~/") {
+		path = strings.Replace(path, "~", getUserHomePath(), 1)
+	}
+
 	// Test if the image file exists
 	imgArg, err := os.Stat(path)
 	if err != nil {
@@ -51,11 +57,12 @@ func SaneImage(path string) error {
 	return nil
 }
 
-func getHomeDir() string {
-	home := os.Getenv("HOME")
-	if home == "" {
+func getUserHomePath() string {
+
+	currentUser, err := user.Current()
+	if err != nil {
 		log.Warn("Unable to determine $HOME")
 		log.Error("Please specify -workdir and -pubkey")
 	}
-	return home
+	return currentUser.HomeDir
 }

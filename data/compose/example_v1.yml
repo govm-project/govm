@@ -5,23 +5,23 @@ networks:
 
 vms:
   - name: vmOne
-    image: /home/user/govm/images/fedora-25-cloud.img
+    image: ~/vms/images/xenial-server-cloudimg-amd64-disk1.img
     cloud: true
-    sshkey: /home/user/.ssh/id_rsa.pub
+    sshkey: ~/.ssh/id_rsa.pub
     user-data: |
       #!/bin/bash
-      dnf install emacs-nox
-    networking:
+      apt-get install emacs-nox -y
+    network:
       net-id: test
       ip: 192.168.200.10
 
   - name: vmTwo
-    image: /home/user/govm/images/fedora-25-cloud.img
+    image: ~/vms/images/xenial-server-cloudimg-amd64-disk1.img
     cloud: true
-    sshkey: /home/user/.ssh/id_rsa.pub
+    sshkey: ~/.ssh/id_rsa.pub
     user-data: |
       #!/bin/bash
-      dnf install emacs-nox
-    networking:
+      apt-get install emacs-nox -y
+    network:
       net-id: test
       ip: 192.168.200.20

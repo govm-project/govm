@@ -142,13 +142,17 @@ func CreateVM( // nolint: gocyclo
 	vm.Cloud = cloud
 
 	if publicKey != "" {
+		if strings.HasPrefix(publicKey, "~/") {
+			publicKey = strings.Replace(publicKey, "~", getUserHomePath(), 1)
+		}
+
 		key, err := ioutil.ReadFile(publicKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 		vm.SSHKey = string(key)
 	} else {
-		homeDir := getHomeDir()
+		homeDir := getUserHomePath()
 		keyPath := strings.Replace(SSHPublicKeyFile, "$HOME", homeDir, 1)
 		key, err := ioutil.ReadFile(keyPath)
 		if err != nil {
