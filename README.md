@@ -11,14 +11,33 @@
 - Copy-on-write images
 - EFI support
 - Cloud-Init and RAW images support
+- Multi-Instances Compose
 
-**Requirements**
 
-- Go 1.11+
+**The only Requirement**
 - Docker
 
-Build the project
------------------
+
+Quick Install (GNU/Linux based distribution)
+-------------------------------------------
+```
+curl -LOk https://github.com/govm-project/govm/releases/download/latest/govm_latest_linux_amd64.tar.gz
+tar -xzvf govm_latest_linux_amd64.tar.gz
+sudo cp govm /usr/local/bin/
+
+# Make sure you have `/usr/local/bin` in your PATH, if not, run this command
+# export PATH=/usr/local/bin/$PATH
+```
+
+**All releases at:**  [releases page](https://github.com/govm-project/govm/releases).
+
+
+Build your own `govm`
+--------------------
+
+**Build Requirements**
+- Go 1.11+
+
 ```
 export GO111MODULE=on
 mkdir -p $GOPATH/src/github.com/govm-project/
