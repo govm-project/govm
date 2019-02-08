@@ -1,19 +1,8 @@
 package vm
 
-// Container Images
-const (
-	VMLauncherContainerImage = "govm/govm"
-	VNCContainerImage        = "govm/novnc-server"
-)
-
-// Default VM Launcher containers' names
-const (
-	VNCServerContainerName = "vm-launcher-novnc-server"
-)
-
 // VM launcher environment variables
 const (
-	SSHPublicKeyFile = "$HOME/.ssh/id_rsa.pub"
+	DefaultSSHPublicKeyFile = "id_rsa.pub"
 )
 
 // Qemu Command Parameters

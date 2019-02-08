@@ -4,7 +4,10 @@ import (
 	"github.com/govm-project/govm/vm"
 )
 
-// Engine stands as an abstraction for VMs management engines
-type Engine interface {
-	CreateVM(spec vm.VM) error
+// VMEngine stands as an abstraction for VMs management engines
+type VMEngine interface {
+	Create(spec vm.Instance) (string, error)
+	Start(id string) error
+	Delete(namespace, id string) error
+	List() ([]vm.Instance, error)
 }

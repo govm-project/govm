@@ -1,8 +1,4 @@
 ---
-networks:
-  - name: test
-    subnet: 192.168.200.0/24
-
 vms:
   - name: vmOne
     image: ~/vms/images/xenial-server-cloudimg-amd64-disk1.img
@@ -10,10 +6,8 @@ vms:
     sshkey: ~/.ssh/id_rsa.pub
     user-data: |
       #!/bin/bash
+      apt-get update -y
       apt-get install emacs-nox -y
-    network:
-      net-id: test
-      ip: 192.168.200.10
 
   - name: vmTwo
     image: ~/vms/images/xenial-server-cloudimg-amd64-disk1.img
@@ -21,7 +15,5 @@ vms:
     sshkey: ~/.ssh/id_rsa.pub
     user-data: |
       #!/bin/bash
+      apt-get update -y
       apt-get install emacs-nox -y
-    network:
-      net-id: test
-      ip: 192.168.200.20

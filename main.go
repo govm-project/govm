@@ -3,13 +3,13 @@ package main
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/govm-project/govm/cmd"
 
-	"github.com/govm-project/govm/cli"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	vm := cli.Init()
+	vm := cmd.Init()
 	err := vm.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
