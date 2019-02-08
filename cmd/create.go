@@ -1,20 +1,20 @@
-package cli
+package cmd
 
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/codegangsta/cli"
-	"github.com/govm-project/govm/types"
-	"github.com/govm-project/govm/utils"
+	"github.com/govm-project/govm/engines/docker"
+	"github.com/govm-project/govm/internal"
 	"github.com/govm-project/govm/vm"
+
+	"github.com/codegangsta/cli"
 	log "github.com/sirupsen/logrus"
 )
 
 func create() cli.Command {
-	defaultNamespace, err := utils.DefaultNamespace()
+	defaultNamespace, err := internal.DefaultNamespace()
 	if err != nil {
 		log.Fatalf("get default namespace: %v", err)
 	}
@@ -104,47 +104,35 @@ func create() cli.Command {
 				Usage: "Environment variable. e.g. --container-env http_proxy=$http_proxy",
 			},
 		},
-		Action: func(c *cli.Context) error {
-			var parentImage string
-			var flavor types.VMSize
-
-			if c.Bool("debug") {
+		Action: func(ctx *cli.Context) error {
+			if ctx.Bool("debug") {
 				log.SetLevel(log.DebugLevel)
 			}
 
-			if c.String("image") == "" {
+			if ctx.String("image") == "" {
 				fmt.Println("Missing --image argument")
-				os.Exit(1)
-			}
-			parentImage, err := filepath.Abs(c.String("image"))
-			if err != nil {
-				fmt.Printf("Unable to determine image location: %v\n", err)
-				os.Exit(1)
-			}
-			err = vm.SaneImage(parentImage)
-			if err != nil {
-				fmt.Printf("%v\n", err)
 				os.Exit(1)
 			}
 
 			// Check if any flavor is provided
-			if c.String("flavor") != "" {
-				flavor = vm.GetVMSizeFromFlavor(c.String("flavor"))
+			var size vm.Size
+			if ctx.String("flavor") != "" {
+				size = vm.GetSizeFromFlavor(ctx.String("flavor"))
 			} else {
-				flavor = vm.NewVMSize(
-					c.String("cpumodel"),
-					c.Int("sockets"),
-					c.Int("cpus"),
-					c.Int("cores"),
-					c.Int("threads"),
-					c.Int("ram"),
+				size = vm.NewSize(
+					ctx.String("cpumodel"),
+					ctx.Int("sockets"),
+					ctx.Int("cpus"),
+					ctx.Int("cores"),
+					ctx.Int("threads"),
+					ctx.Int("ram"),
 				)
 			}
 
 			// Check if there are any shares and validate the format.
 			// They must be separated by the ":" characted as docker does
-			if len(c.StringSlice("share")) > 0 {
-				for _, dir := range c.StringSlice("share") {
+			if len(ctx.StringSlice("share")) > 0 {
+				for _, dir := range ctx.StringSlice("share") {
 					share := strings.Split(dir, ":")
 					if len(share) != 2 {
 						log.Fatal("Wrong share format: " + dir +
@@ -155,26 +143,42 @@ func create() cli.Command {
 				}
 			}
 
-			workDir := c.String("workdir")
+			workDir := ctx.String("workdir")
 			if workDir == "" {
-				workDir = getWorkDir()
+				workDir = internal.GetDefaultWorkDir()
 			}
-			newVM := vm.CreateVM(
-				c.String("name"),
-				c.String("namespace"),
-				parentImage,
-				workDir,
-				c.String("key"),
-				c.String("user-data"),
-				flavor,
-				c.Bool("cloud"),
-				c.Bool("efi"),
-				types.NetworkingOptions{},
-				c.StringSlice("share"),
-				c.StringSlice("container-env"),
-			)
-			newVM.Launch()
-			newVM.ShowInfo()
+			newVM := vm.Instance{
+				Name:             ctx.String("name"),
+				Namespace:        ctx.String("namespace"),
+				ParentImage:      ctx.String("image"),
+				Workdir:          workDir,
+				SSHPublicKeyFile: ctx.String("key"),
+				UserData:         ctx.String("user-data"),
+				Size:             size,
+				Cloud:            ctx.Bool("cloud"),
+				Efi:              ctx.Bool("efi"),
+				NetOpts:          vm.NetworkingOptions{},
+				Shares:           ctx.StringSlice("share"),
+				ContainerEnvVars: ctx.StringSlice("container-env"),
+			}
+
+			if err := newVM.Check(); err != nil {
+				log.Fatalf("Error on VM Instance pre-check: %v", err)
+			}
+
+			engine := docker.Engine{}
+			engine.Init()
+			id, err := engine.Create(newVM)
+			if err != nil {
+				log.Fatalf("Error when creating the new VM: %v", err)
+			}
+			err = engine.Start(id)
+			if err != nil {
+				log.Fatalf("Error when starting the new VM: %v", err)
+			}
+
+			log.Printf("GoVM Instance %v has been successfully created", newVM.Name)
+
 			return nil
 		},
 	}

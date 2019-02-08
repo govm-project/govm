@@ -1,4 +1,4 @@
-package cli
+package cmd
 
 // VM launcher environment variables
 const (

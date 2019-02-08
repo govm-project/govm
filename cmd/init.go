@@ -1,4 +1,4 @@
-package cli
+package cmd
 
 import (
 	"fmt"
@@ -32,10 +32,10 @@ func Init() *cli.App {
 	// sub-commands
 	vmCLI.Commands = []cli.Command{
 		create(),
-		remove(),
 		list(),
+		remove(),
 		compose(),
-		connect(),
+		//connect(),
 	}
 
 	return vmCLI

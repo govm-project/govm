@@ -1,11 +1,13 @@
-package utils
+package internal
 
 import (
 	"fmt"
+	"os"
 	"os/user"
 	"strings"
 
 	"github.com/docker/docker/pkg/namesgenerator"
+	log "github.com/sirupsen/logrus"
 )
 
 const containerPrefix = "govm"
@@ -44,4 +46,31 @@ func DefaultNamespace() (string, error) {
 // namesgenerator.GetRandomName() to avoid extra imports.
 func RandomName() string {
 	return namesgenerator.GetRandomName(0)
+}
+
+// GetDefaultWorkDir returns the default working directory
+func GetDefaultWorkDir() string {
+
+	homeDir := GetUserHomePath()
+	workDir := fmt.Sprintf("%v/vms", homeDir)
+	_, err := os.Stat(workDir)
+	if err != nil {
+		log.WithField("workdir", workDir).Warn(
+			"Work Directory does not exist")
+
+		log.WithField("workdir", workDir+"/data").Info(
+			"Creating workdir")
+		err = os.MkdirAll(workDir+"/data", 0755) // nolint: gas
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Creating %s", workDir+"/images")
+		err = os.Mkdir(workDir+"/images", 0755) // nolint: gas
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	return workDir
 }
