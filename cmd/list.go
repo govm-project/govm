@@ -8,8 +8,8 @@ import (
 	"github.com/govm-project/govm/engines/docker"
 	"github.com/govm-project/govm/internal"
 
-	"github.com/codegangsta/cli"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 func list() cli.Command {

@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 // Revision is used to print the commit hash when using the --version flag.
@@ -35,6 +35,7 @@ func Init() *cli.App {
 		list(),
 		remove(),
 		compose(),
+		start(),
 		//connect(),
 	}
 

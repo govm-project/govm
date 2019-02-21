@@ -10,6 +10,7 @@ require (
 	github.com/moby/moby v1.13.1
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/sirupsen/logrus v1.1.0
+	github.com/urfave/cli v1.20.0
 	golang.org/x/crypto v0.0.0-20181001203147-e3636079e1a4
 	golang.org/x/net v0.0.0-20181003013248-f5e5bdd77824
 	golang.org/x/sys v0.0.0-20181003145944-af653ce8b74f // indirect

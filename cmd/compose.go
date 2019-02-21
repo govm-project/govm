@@ -9,8 +9,8 @@ import (
 	"github.com/govm-project/govm/internal"
 	"github.com/govm-project/govm/vm"
 
-	"github.com/codegangsta/cli"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -68,7 +68,7 @@ func compose() cli.Command {
 				if err != nil {
 					log.Fatalf("Error when creating the new VM: %v", err)
 				}
-				err = engine.Start(id)
+				err = engine.Start(vm.Namespace, id)
 				if err != nil {
 					log.Fatalf("Error when starting the new VM: %v", err)
 				}

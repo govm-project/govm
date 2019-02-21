@@ -134,8 +134,17 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) {
 }
 
 // Start starts a Docker container-based VM instance
-func (e Engine) Start(id string) error {
-	return e.docker.Start(id, "")
+func (e Engine) Start(namespace, id string) error {
+
+	container, err := e.docker.Inspect(id)
+	if err != nil {
+		fullName := internal.GenerateContainerName(namespace, id)
+		container, err = e.docker.Inspect(fullName)
+		if err != nil {
+			return err
+		}
+	}
+	return e.docker.Start(container.ID, "")
 }
 
 // Stop stops a Docker container-based VM instance

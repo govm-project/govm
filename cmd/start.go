@@ -12,31 +12,27 @@ import (
 	"github.com/urfave/cli"
 )
 
-func remove() cli.Command {
+func start() cli.Command {
 	defaultNamespace, err := internal.DefaultNamespace()
 	if err != nil {
 		log.Fatalf("get default namespace: %v", err)
 	}
 	command := cli.Command{
-		Name:    "remove",
+		Name:    "start",
 		Aliases: []string{"d"},
-		Usage:   "Remove vms",
+		Usage:   "Start a GoVM Instance",
 		Flags: []cli.Flag{
-			cli.BoolFlag{
-				Name:  "all",
-				Usage: "Remove all vms",
-			},
 			cli.StringFlag{
 				Name:  "namespace",
 				Value: defaultNamespace,
-				Usage: "list VMs from this namespace",
+				Usage: "Define Instance's namespace",
 			},
 		},
 		Action: func(c *cli.Context) error {
 			if c.NArg() <= 0 {
-				err := errors.New("missing VM name")
+				err := errors.New("missing GoVM Instance name")
 				fmt.Println(err)
-				fmt.Printf("USAGE:\n govm remove [command options] [name]\n")
+				fmt.Printf("USAGE:\n govm start [command options] [name]\n")
 				os.Exit(1)
 			}
 
@@ -45,12 +41,12 @@ func remove() cli.Command {
 
 			engine := docker.Engine{}
 			engine.Init()
-			err := engine.Delete(namespace, name)
+			err := engine.Start(namespace, name)
 			if err != nil {
-				log.Fatalf("Error when removing the VM %v: %v", name, err)
+				log.Fatalf("Error when starting the GoVM Instance %v: %v", name, err)
 			}
 
-			log.Printf("GoVM Instance %v has been successfully removed", name)
+			log.Printf("GoVM Instance %v has been successfully started", name)
 
 			return nil
 		},

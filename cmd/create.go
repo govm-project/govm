@@ -9,8 +9,8 @@ import (
 	"github.com/govm-project/govm/internal"
 	"github.com/govm-project/govm/vm"
 
-	"github.com/codegangsta/cli"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 func create() cli.Command {
@@ -172,7 +172,7 @@ func create() cli.Command {
 			if err != nil {
 				log.Fatalf("Error when creating the new VM: %v", err)
 			}
-			err = engine.Start(id)
+			err = engine.Start(newVM.Namespace, id)
 			if err != nil {
 				log.Fatalf("Error when starting the new VM: %v", err)
 			}
