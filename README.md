@@ -12,6 +12,7 @@
 - EFI support
 - Cloud-Init and RAW images support
 - Multi-Instances Compose
+- Custom hypervisor-level and qemu flags
 
 
 **The only Requirement**
