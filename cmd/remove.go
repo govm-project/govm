@@ -33,7 +33,7 @@ func remove() cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			if c.NArg() <= 0 {
+			if c.NArg() <= 0 && !c.Bool("all") {
 				err := errors.New("missing VM name")
 				fmt.Println(err)
 				fmt.Printf("USAGE:\n govm remove [command options] [name]\n")
@@ -41,17 +41,30 @@ func remove() cli.Command {
 			}
 
 			namespace := c.String("namespace")
-			name := c.Args().First()
-
 			engine := docker.Engine{}
 			engine.Init()
-			err := engine.Delete(namespace, name)
-			if err != nil {
-				log.Fatalf("Error when removing the VM %v: %v", name, err)
+
+			names := []string{}
+			if all := c.Bool("all"); all {
+				instances, err := engine.List(namespace, all)
+				if err != nil {
+					log.Fatalf("Error when listing current GoVM instances: %v", err)
+				}
+				for _, instance := range instances {
+					names = append(names, instance.Name)
+				}
+			} else {
+				names = append(names, c.Args().First())
 			}
 
-			log.Printf("GoVM Instance %v has been successfully removed", name)
+			for _, name := range names {
+				err := engine.Delete(namespace, name)
+				if err != nil {
+					log.Fatalf("Error when removing the VM %v: %v", name, err)
+				}
 
+				log.Printf("GoVM Instance %v has been successfully removed", name)
+			}
 			return nil
 		},
 	}
