@@ -107,6 +107,7 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) {
 		PublishAllPorts: true,
 		Binds:           defaultMountBinds,
 		DNS:             spec.NetOpts.DNS,
+		RestartPolicy:   container.RestartPolicy{Name: "always"},
 	}
 
 	if spec.NetOpts.IP != "" {
