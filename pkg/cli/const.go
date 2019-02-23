@@ -1,9 +1,9 @@
-package cmd
+package cli
 
 // VM launcher environment variables
 const (
-	VMLauncherWorkdir = "$HOME/vms"
-	SSHPublicKeyFile  = "$HOME/.ssh/id_rsa.pub"
+	VMLauncherWorkdir = "~/vms"
+	SSHPublicKeyFile  = "~/.ssh/id_rsa.pub"
 )
 
 // Container Images

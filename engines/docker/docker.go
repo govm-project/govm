@@ -29,7 +29,7 @@ type Docker struct {
 func NewDockerClient() *Docker {
 
 	SetAPIVersion()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewEnvClient()
 	if err != nil {
 		panic(err)
 	}
@@ -110,11 +110,12 @@ func (d *Docker) Search(name string) (types.Container, error) {
 
 // ImageExists verifies that an image exists in the local docker registry
 func (d *Docker) ImageExists(name string) bool {
-
+	fltr := filters.NewArgs()
+	fltr.Add("reference", "govm/govm")
 	images, err := d.ImageList(d.ctx,
 		types.ImageListOptions{
 			All:     false,
-			Filters: filters.NewArgs(filters.Arg("reference", "govm/govm")),
+			Filters: fltr,
 		},
 	)
 	if err != nil || len(images) == 0 {
