@@ -43,7 +43,6 @@ var createCommand = cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "key",
-			Value: "",
 			Usage: "SSH key to be included in a cloud image.",
 		},
 		&cli.StringFlag{
