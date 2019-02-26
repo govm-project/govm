@@ -1,104 +1,45 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
 
-	"golang.org/x/crypto/ssh"
+	"github.com/govm-project/govm/engines/docker"
+	"github.com/govm-project/govm/pkg/termutil"
+	cli "gopkg.in/urfave/cli.v2"
 )
 
-type password string
-
-func (p password) Password(user string) (password string, err error) {
-	return string(p), nil
-}
-
-// TODO: Reduce cyclomatic complexity
-func getNewSSHConn(username, hostname, key string) { // nolint: gocyclo
-	//var hostKey ssh.PublicKey
-
-	privateKeyBytes, err := ioutil.ReadFile(key)
-	if err != nil {
-		log.Fatalf("Error on reading private key file: %v", err)
-	}
-
-	// Create the Signer for this private key.
-	signer, err := ssh.ParsePrivateKey(privateKeyBytes)
-	if err != nil {
-		log.Fatalf("unable to parse private key: %v", err)
-	}
-
-	// Create client config
-	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{
-			//ssh.Password("password"),
-			ssh.PublicKeys(signer),
+var sshCommand = cli.Command{
+	Name:  "ssh",
+	Usage: "ssh into a running VM",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "user",
+			Aliases: []string{"u"},
+			Usage:   "login as this username",
 		},
-		//HostKeyCallback: ssh.FixedHostKey(hostKey),
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	config.SetDefaults()
-	// Connect to ssh server
-	conn, err := ssh.Dial("tcp", hostname+":22", config)
-	if err != nil {
-		log.Fatal("unable to connect: ", err)
-	}
-	defer func() {
-		err := conn.Close()
-		// TODO: Change to warning when log package is changed
-		log.Println(err)
-	}()
-
-	// Create a session
-	session, err := conn.NewSession()
-	if err != nil {
-		log.Fatal("unable to create session: ", err)
-	}
-	defer func() {
-		err := session.Close()
-		// TODO: Change to warning when log package is changed
-		log.Println(err)
-	}()
-
-	// Set IO
-	session.Stdout = os.Stdout
-	session.Stderr = os.Stderr
-	in, err := session.StdinPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Set up terminal modes
-	modes := ssh.TerminalModes{
-		ssh.ECHO:          0,     // disable echoing
-		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
-		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
-	}
-
-	// Request pseudo terminal
-	if err := session.RequestPty("xterm", 80, 40, modes); err != nil {
-		log.Fatalf("request for pseudo terminal failed: %s", err)
-	}
-
-	// Start remote shell
-	if err := session.Shell(); err != nil {
-		log.Fatalf("failed to start shell: %s", err)
-	}
-
-	// Accepting commands
-	for {
-		reader := bufio.NewReader(os.Stdin)
-		str, err := reader.ReadString('\n')
-		if err != nil {
-			log.Println("Error reading command")
+		&cli.StringFlag{
+			Name:    "key",
+			Aliases: []string{"k"},
+			Usage:   "ssh private key file",
+			Value:   "~/.ssh/id_rsa",
+		},
+	},
+	Action: func(c *cli.Context) error {
+		if c.Args().Len() != 1 {
+			return fmt.Errorf("VM name required")
 		}
-		_, err = fmt.Fprint(in, str)
-		if err != nil {
-			log.Println("Error reading command")
+		name := c.Args().First()
+		namespace := c.String("namespace")
+		user := c.String("user")
+		if user == "" {
+			return fmt.Errorf("--user argument required")
 		}
-	}
+		key := c.String("key")
+		term := termutil.StdTerminal()
+
+		engine := docker.Engine{}
+		engine.Init()
+
+		return engine.SSHVM(namespace, name, user, key, term)
+	},
 }
