@@ -1,4 +1,4 @@
-# Container VM Launcher
+# GoVM Project
 [![Build Status](https://semaphoreci.com/api/v1/govmproject/govm/branches/master/badge.svg)](https://semaphoreci.com/govmproject/govm)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgovm-project%2Fgovm.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgovm-project%2Fgovm?ref=badge_shield)
 
@@ -29,7 +29,7 @@ tar -xzvf govm_<latest_govm_release>_linux_amd64.tar.gz
 sudo cp govm /usr/local/bin/
 
 # Make sure you have `/usr/local/bin` in your PATH, if not, run this command
-# export PATH=/usr/local/bin/$PATH
+# export PATH=/usr/local/bin/:$PATH
 ```
 3. Done, you're ready to go.
 
@@ -94,6 +94,14 @@ Removes the whole privileged docker container and its virtual machine data.
 | value | If the value (name of container) is specified, it will remove it. See: ``govm list`` to get name | Yes      |
 | --all | Removes all ``govm`` created virtual machines                                                    | No       |
 
+start
+-----
+Starts a stopped GoVM Instance
+
+| Flag  | Description                 | Required |
+|-------|-----------------------------|----------|
+| value | GoVM instance's name or ID  | Yes      |
+
 list
 ----
 Lists all virtual machines that were created with the ``govm`` tool. It also shows the VNC access url and name.
@@ -122,8 +130,9 @@ Deploys one or multiple virtual machines with a given compose template file.
 YAML template file example:
 - [2 VMs deployment](data/compose/example_v1.yml)
 
-connect
--------
+ssh
+---
+
 Connects through ssh to the specified virtual machine.
 
 | Flag         | Description                               | Required |
@@ -145,12 +154,13 @@ VERSION:
    0.0.0
 
 COMMANDS:
-     create, c      Create a new govm
-     delete, d      Delete govms
-     list, ls       List govms
-     compose, co    Deploy Govms from yaml templates
-     connect, conn  Get a shell from a Govm
-     help, h        Shows a list of commands or help for one command
+     create, c                Create a new VM
+     list, ls                 List VMs
+     remove, delete, rm, del  Remove VMs
+     start, up, s             Start a GoVM Instance
+     compose, co              Deploy VMs from a compose config file
+     ssh                      ssh into a running VM
+     help, h                  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --workdir value  Alternate working directory. Default: ~/govm
