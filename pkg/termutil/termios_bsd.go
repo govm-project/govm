@@ -20,25 +20,27 @@ type Termios unix.Termios
 // mode and returns the previous state of the terminal so that it can be
 // restored.
 func makeRaw(fd uintptr) (*State, error) {
-	oldTios, err := getTermios(fd)
+	termios, err := getTermios(fd)
 	if err != nil {
 		return nil, err
 	}
 
-	newTios := *oldTios
-	newTios.Iflag &^= (unix.IGNBRK | unix.BRKINT | unix.PARMRK | unix.ISTRIP | unix.INLCR | unix.IGNCR | unix.ICRNL | unix.IXON)
-	newTios.Oflag &^= unix.OPOST
-	newTios.Lflag &^= (unix.ECHO | unix.ECHONL | unix.ICANON | unix.ISIG | unix.IEXTEN)
-	newTios.Cflag &^= (unix.CSIZE | unix.PARENB)
-	newTios.Cflag |= unix.CS8
-	newTios.Cc[unix.VMIN] = 1
-	newTios.Cc[unix.VTIME] = 0
+	var oldState State
+	oldState.termios = Termios(*termios)
 
-	if err := setTermios(fd, &newTios); err != nil {
+	termios.Iflag &^= (unix.IGNBRK | unix.BRKINT | unix.PARMRK | unix.ISTRIP | unix.INLCR | unix.IGNCR | unix.ICRNL | unix.IXON)
+	termios.Oflag &^= unix.OPOST
+	termios.Lflag &^= (unix.ECHO | unix.ECHONL | unix.ICANON | unix.ISIG | unix.IEXTEN)
+	termios.Cflag &^= (unix.CSIZE | unix.PARENB)
+	termios.Cflag |= unix.CS8
+	termios.Cc[unix.VMIN] = 1
+	termios.Cc[unix.VTIME] = 0
+
+	if err := setTermios(fd, termios); err != nil {
 		return nil, err
 	}
 
-	return &State{termios: oldTios}, nil
+	return &oldState, nil
 }
 
 func getTermios(fd uintptr) (*Termios, error) {
@@ -50,6 +52,9 @@ func getTermios(fd uintptr) (*Termios, error) {
 }
 
 func setTermios(fd uintptr, t *Termios) error {
-	_, _, err := unix.Syscall(unix.SYS_IOCTL, fd, setTermiosOp, uintptr(unsafe.Pointer(&t)))
-	return err
+	_, _, err := unix.Syscall(unix.SYS_IOCTL, fd, setTermiosOp, uintptr(unsafe.Pointer(t)))
+	if err != 0 {
+		return err
+	}
+	return nil
 }

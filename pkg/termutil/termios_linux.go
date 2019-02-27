@@ -35,6 +35,7 @@ func makeRaw(fd uintptr) (*State, error) {
 	if err := setTermios(fd, termios); err != nil {
 		return nil, err
 	}
+
 	return &oldState, nil
 }
 
