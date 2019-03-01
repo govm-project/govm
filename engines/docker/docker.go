@@ -157,14 +157,38 @@ func (d *Docker) Remove(id string) error {
 // SetAPIVersion gets local docker server API version.
 // TODO: Investigate how we can replace the exec.Command approach
 func SetAPIVersion() {
-	cmd := exec.Command("docker", "version", "--format", "{{.Server.APIVersion}}")
-	cmdOutput := &bytes.Buffer{}
-	cmd.Stdout = cmdOutput
+	getentCmd := exec.Command("getent", "group", "docker")
+	grepCmd := exec.Command("grep", os.Getenv("USER"))
 
-	err := cmd.Run()
-	if err != nil {
-		log.Fatalf("Error getting Docker Server API version: %v", err)
+	read, write := io.Pipe()
+	getentCmd.Stdout = write
+	grepCmd.Stdin = read
+
+	var cmdOutputGetent bytes.Buffer
+	grepCmd.Stdout = &cmdOutputGetent
+	getentErr := getentCmd.Start()
+	if getentErr != nil {
+		log.Fatalf("Error with code: %v", getentErr)
 	}
-	apiVersion := strings.TrimSpace(string(cmdOutput.Bytes()))
-	_ = os.Setenv("DOCKER_API_VERSION", apiVersion)
+	grepErr := grepCmd.Start()
+	if grepErr != nil {
+		log.Fatalf("Error with code: %v", grepErr)
+	}
+	getentCmd.Wait()
+	write.Close()
+	grepCmd.Wait()
+
+	if len(cmdOutputGetent.Bytes()) > 0 {
+		cmd := exec.Command("docker", "version", "--format", "{{.Server.APIVersion}}")
+		cmdOutput := &bytes.Buffer{}
+		cmd.Stdout = cmdOutput
+		err := cmd.Run()
+		if err != nil {
+			log.Fatalf("Error getting Docker Server API version: %v", err)
+		}
+		apiVersion := strings.TrimSpace(string(cmdOutput.Bytes()))
+		_ = os.Setenv("DOCKER_API_VERSION", apiVersion)
+	} else {
+		log.Fatal("Current user does not belong the the docker group.")
+	}
 }
