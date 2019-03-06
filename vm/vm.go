@@ -81,7 +81,7 @@ func (ins *Instance) Check() (err error) {
 	}
 
 	if ins.Name == "" {
-		ins.Name = internal.RandomName()
+		ins.Name = strings.Replace(internal.RandomName(), "_", "-", 1)
 	}
 
 	// Check if user data is provided

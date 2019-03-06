@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -26,7 +27,7 @@ func CheckFilePath(path string) (string, error) {
 		return path, fmt.Errorf("%v is not a regular file", path)
 	}
 
-	return path, nil
+	return filepath.Abs(path)
 }
 
 func GetUserHomePath() string {
