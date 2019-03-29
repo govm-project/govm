@@ -250,7 +250,6 @@ func (e Engine) setVNC(vncID string, port string) error {
 		_, err := e.docker.Create(containerConfig, hostConfig,
 			&network.NetworkingConfig{}, VNCServerContainerName)
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 	}

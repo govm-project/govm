@@ -106,17 +106,29 @@ list
 ----
 Lists all virtual machines that were created with the ``govm`` tool. It also shows the VNC access url and name.
 
-| Flag              | Description                       | Required |
-|-------------------|-----------------------------------|----------|
-| --all             | Show VMs from all namespaces      | No       |
-| --namespace value | Show VMs from the given namespace | No       |
+| Flag                     | Description                                    | Required |
+|--------------------------|------------------------------------------------|----------|
+| --all                    | Show VMs from all namespaces                   | No       |
+| --namespace value        | Show VMs from the given namespace              | No       |
+| --format value, -f value | String containing the template code to execute | No       |
 
-*Output example:*
+*Output example*
 ```
-ID          IP           VNC_URL                 NAME
-bd0088a3eb  172.17.0.2   http://localhost:40669  clear-test
-db3ea1be1d  172.17.0.3   http://localhost:35957  cirros-test
-f8a4cd7e93  172.17.0.4   http://localhost:42161  test-30310
+# govm list
+ID         Name                   Namespace IP
+b9b5d3a288 test-14731             onmunoz   172.17.0.6
+4d6731b571 test-29652             onmunoz   172.17.0.5
+ef004385d4 test-20024             onmunoz   172.17.0.4
+5e5f42047b happy-poitras          onmunoz   172.17.0.3
+e90608db45 wonderful-varahamihira onmunoz   172.17.0.2
+```
+
+*Filtered output*
+```
+# govm list -f '{{select (filterRegexp . "Name" "test-*") "IP"}}'
+172.17.0.6
+172.17.0.5
+172.17.0.4
 ```
 
 compose

@@ -1,16 +1,18 @@
 module github.com/govm-project/govm
 
 require (
-	github.com/codegangsta/cli v1.20.0
+	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/docker/distribution v2.6.2+incompatible // indirect
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/go-cmp v0.2.0
-	github.com/moby/moby v1.13.1
+	github.com/intel/tfortools v0.2.0
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/sirupsen/logrus v1.1.0
+	github.com/stevvooe/resumable v0.0.0-20180830230917-22b14a53ba50 // indirect
 	golang.org/x/crypto v0.0.0-20181001203147-e3636079e1a4
 	golang.org/x/net v0.0.0-20181003013248-f5e5bdd77824
 	golang.org/x/sys v0.0.0-20181003145944-af653ce8b74f

@@ -3,11 +3,10 @@ package cli
 import (
 	"fmt"
 	"os"
-	"text/tabwriter"
 
 	"github.com/govm-project/govm/engines/docker"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/intel/tfortools"
 	cli "gopkg.in/urfave/cli.v2"
 )
 
@@ -21,31 +20,45 @@ var listCommand = cli.Command{
 			Aliases: []string{"a"},
 			Usage:   "list VMs from all namespaces",
 		},
+		&cli.StringFlag{
+			Name:    "format",
+			Aliases: []string{"f"},
+			Usage:   "string containing the template code to execute",
+		},
 	},
 	Action: func(c *cli.Context) error {
 
 		engine := docker.Engine{}
 		engine.Init()
 
-		instances, err := engine.List(c.String("namespace"), c.Bool("all"))
+		result, err := engine.List(c.String("namespace"), c.Bool("all"))
 		if err != nil {
 			return err
 		}
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "ID\tName\tNamespace\tIP\tVNC")
-		for _, instance := range instances {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-				instance.ID,
-				instance.Name,
-				instance.Namespace,
-				instance.NetOpts.IP,
-				fmt.Sprintf("http://localhost:%v", instance.VNCPort),
-			)
+		// Required due a limitation on intel/tfortools for embedded structures
+		// https://github.com/intel/tfortools/issues/18
+		type outInstance struct {
+			ID        string
+			Name      string
+			Namespace string
+			IP        string
 		}
-		err = w.Flush()
+
+		instances := []outInstance{}
+		for _, elem := range result {
+			instances = append(instances, outInstance{elem.ID, elem.Name, elem.Namespace, elem.NetOpts.IP})
+		}
+
+		format := c.String("format")
+		if format == "" {
+			format = `{{table .}}`
+		}
+
+		err = tfortools.OutputToTemplate(os.Stdout, "format", format, instances, nil)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Fprintln(os.Stderr, tfortools.GenerateUsageDecorated("format", instances, nil))
+			return fmt.Errorf("Unable to execute template : %v", err)
 		}
 
 		return nil
