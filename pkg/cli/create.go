@@ -78,7 +78,12 @@ var createCommand = cli.Command{
 		&cli.IntFlag{
 			Name:  "ram",
 			Value: 1024,
-			Usage: "Allocated RAM",
+			Usage: "Allocated RAM in MB",
+		},
+		&cli.IntFlag{
+			Name:  "disk",
+			Value: 50,
+			Usage: "Root disk size in GB",
 		},
 		&cli.BoolFlag{
 			Name:  "debug",
@@ -115,6 +120,7 @@ var createCommand = cli.Command{
 				ctx.Int("cores"),
 				ctx.Int("threads"),
 				ctx.Int("ram"),
+				ctx.Int("disk"),
 			)
 		}
 

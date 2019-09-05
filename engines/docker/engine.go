@@ -46,6 +46,7 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) {
 			(spec.Size.Sockets * spec.Size.Cores * spec.Size.Threads),
 			spec.Size.RAM,
 		),
+		fmt.Sprintf("COW_SIZE=%dG", spec.Size.DISK),
 	}
 	env = append(env, spec.ContainerEnvVars...)
 

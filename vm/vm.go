@@ -22,6 +22,7 @@ type Size struct {
 	Cores    int    `yaml:"cores"`
 	Threads  int    `yaml:"threads"`
 	RAM      int    `yaml:"ram"`
+	DISK     int    `yaml:"disk"`
 }
 
 //ConfigDriveMetaData stands for cloud images config drive
@@ -202,7 +203,7 @@ func (ins *Instance) Check() (err error) {
 }
 
 //NewSize creates a new VMSize specification
-func NewSize(model string, sockets, cpus, cores, threads, ram int) Size {
+func NewSize(model string, sockets, cpus, cores, threads, ram, disk int) Size {
 	var vmSize Size
 
 	if model != "" {
@@ -243,6 +244,12 @@ func NewSize(model string, sockets, cpus, cores, threads, ram int) Size {
 		vmSize.RAM = 4096
 	}
 
+	if disk != 0 {
+		vmSize.DISK = disk
+	} else {
+		vmSize.DISK = DiskDefaultSizeGB
+	}
+
 	return vmSize
 }
 
@@ -258,17 +265,17 @@ func GetSizeFromFlavor(flavor string) (size Size) {
 
 	switch flavor {
 	case "micro":
-		size = NewSize(cpuModel, 1, 1, 1, 1, 512)
+		size = NewSize(cpuModel, 1, 1, 1, 1, 512, DiskDefaultSizeGB)
 	case "tiny":
-		size = NewSize(cpuModel, 1, 1, 1, 1, 1024)
+		size = NewSize(cpuModel, 1, 1, 1, 1, 1024, 2*DiskDefaultSizeGB)
 	case "small":
-		size = NewSize(cpuModel, 1, 1, 2, 1, 2048)
+		size = NewSize(cpuModel, 1, 1, 2, 1, 2048, 4*DiskDefaultSizeGB)
 	case "medium":
-		size = NewSize(cpuModel, 2, 2, 2, 2, 4096)
+		size = NewSize(cpuModel, 2, 2, 2, 2, 4096, 8*DiskDefaultSizeGB)
 	case "large":
-		size = NewSize(cpuModel, 1, 4, 4, 4, 8192)
+		size = NewSize(cpuModel, 1, 4, 4, 4, 8192, 16*DiskDefaultSizeGB)
 	default:
-		size = NewSize(cpuModel, 2, 2, 2, 2, 4096)
+		size = NewSize(cpuModel, 2, 2, 2, 2, 4096, DiskDefaultSizeGB)
 	}
 	return
 }
