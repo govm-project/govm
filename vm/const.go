@@ -22,3 +22,6 @@ const (
 	MedatataFile  = "meta_data.json"
 	UserDataMount = "%s:/cloud-init/openstack/latest/user_data"
 )
+
+// Default size of qcow2 root disk in GB.
+const DiskDefaultSizeGB = 50
