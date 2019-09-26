@@ -22,6 +22,14 @@ func CheckFilePath(path string) (string, error) {
 		return path, fmt.Errorf("File %v does not exist", path)
 	}
 
+	if pathDir := filepath.Dir(path); pathDir == "." {
+		pathDir, err = os.Getwd()
+		if err != nil {
+			return path, fmt.Errorf("File's absolute path cannot be constructed for  %v", path)
+		}
+		path = fmt.Sprintf("%v/%v", pathDir, path)
+	}
+
 	mode := imgArg.Mode()
 	if !mode.IsRegular() {
 		return path, fmt.Errorf("%v is not a regular file", path)
