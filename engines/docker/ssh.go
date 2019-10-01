@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/govm-project/govm/internal"
@@ -13,6 +14,7 @@ import (
 	"github.com/govm-project/govm/pkg/termutil"
 )
 
+// nolint: funlen
 func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal) error {
 	container, err := e.docker.Inspect(id)
 	if err != nil {
@@ -41,7 +43,7 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // nolint: gosec
 	}
 	config.SetDefaults()
 
@@ -70,7 +72,7 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 	if err != nil {
 		return err
 	}
-	defer term.Restore()
+	defer handleError(term.Restore())
 
 	err = sess.RequestPty(os.Getenv("TERM"), int(sz.Height), int(sz.Width), nil)
 	if err != nil {
@@ -86,7 +88,7 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 	stopch := make(chan struct{})
 	defer close(stopch)
 	go func() {
-		sigch := make(chan os.Signal)
+		sigch := make(chan os.Signal, 1)
 		signal.Notify(sigch, syscall.SIGWINCH)
 		defer signal.Stop(sigch)
 		defer close(sigch)
@@ -96,7 +98,7 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 			case <-sigch:
 				sz, err := term.GetWinsize()
 				if err == nil {
-					sess.WindowChange(int(sz.Height), int(sz.Width))
+					handleError(sess.WindowChange(int(sz.Height), int(sz.Width)))
 				}
 			case <-stopch:
 				break outer
@@ -105,4 +107,10 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 	}()
 
 	return sess.Wait()
+}
+
+func handleError(err error) {
+	if err != nil {
+		log.Error(err)
+	}
 }

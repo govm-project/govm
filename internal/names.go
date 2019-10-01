@@ -50,7 +50,6 @@ func RandomName() string {
 
 // GetDefaultWorkDir returns the default working directory
 func GetDefaultWorkDir() string {
-
 	homeDir := GetUserHomePath()
 	workDir := fmt.Sprintf("%v/vms", homeDir)
 	_, err := os.Stat(workDir)

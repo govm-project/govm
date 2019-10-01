@@ -10,28 +10,25 @@ import (
 	"github.com/govm-project/govm/internal"
 	"github.com/govm-project/govm/vm"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 )
 
+// nolint: typecheck
 // Engine stands an entry point for the docker container services
 type Engine struct {
-	ctx    context.Context
 	docker *Docker
 }
 
+// nolint: typecheck
 // Init initializes a the Engine's docker client
 func (e *Engine) Init() {
 	e.docker = NewDockerClient()
 }
 
 // Create create a new instance
-func (e Engine) Create(spec vm.Instance) (id string, err error) {
-
+func (e Engine) Create(spec vm.Instance) (id string, err error) { // nolint: funlen
 	vmDataDirectory := spec.Workdir + "/data/" + spec.Name
 	// Default Environment Variables
 	env := []string{
@@ -128,16 +125,15 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) {
 
 	containerName := internal.GenerateContainerName(spec.Namespace, spec.Name)
 	if _, err = e.docker.Search(containerName); err != nil && err.Error() != "NotFound" {
-		return
+		return id, err
 	}
 
 	id, err = e.docker.Create(containerConfig, hostConfig, networkConfig, containerName)
-	return
+	return id, err
 }
 
 // Start starts a Docker container-based VM instance
 func (e Engine) Start(namespace, id string) error {
-
 	container, err := e.docker.Inspect(id)
 	if err != nil {
 		fullName := internal.GenerateContainerName(namespace, id)
@@ -154,10 +150,11 @@ func (e Engine) Stop(id string) error {
 	return nil
 }
 
+// nolint: typecheck
 // List lists  all the Docker container-based VM instances
-func (e Engine) List(namespace string, all bool) (instances []vm.Instance, err error) {
-
+func (e Engine) List(namespace string, all bool) ([]vm.Instance, error) {
 	listArgs := filters.NewArgs()
+	instances := []vm.Instance{}
 	listArgs.Add("ancestor", VMLauncherContainerImage)
 	if !all {
 		listArgs.Add("label", "namespace="+namespace)
@@ -165,7 +162,7 @@ func (e Engine) List(namespace string, all bool) (instances []vm.Instance, err e
 
 	containers, err := e.docker.List(listArgs)
 	if err != nil {
-		return
+		return instances, err
 	}
 
 	for _, container := range containers {
@@ -185,12 +182,11 @@ func (e Engine) List(namespace string, all bool) (instances []vm.Instance, err e
 		)
 	}
 
-	return
+	return instances, err
 }
 
 // Delete deletes an Instance of GoVM
 func (e Engine) Delete(namespace, id string) error {
-
 	container, err := e.docker.Inspect(id)
 	if err != nil {
 		fullName := internal.GenerateContainerName(namespace, id)
@@ -220,52 +216,53 @@ func (e Engine) Delete(namespace, id string) error {
 	return e.docker.Remove(container.ID)
 }
 
+// nolint:godox
 // TODO: Figure how to set VNC on new GoVM instaces
 // This shoud run after a GoVM instance start.
-func (e Engine) setVNC(vncID string, port string) error {
-
-	vncContainer, err := e.docker.Search(VNCServerContainerName)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error":     err.Error(),
-			"container": VNCContainerImage,
-		}).Warn("VNC container was not found")
-
-		mountBinds := []string{
-			fmt.Sprintf("%v/data:/vm", internal.GetDefaultWorkDir())}
-
-		containerConfig := &container.Config{
-			Image:    VNCContainerImage,
-			Hostname: VNCServerContainerName,
-			Cmd:      nil,
-			Env:      nil,
-			Labels:   nil,
-		}
-
-		hostConfig := &container.HostConfig{
-			Privileged:      true,
-			PublishAllPorts: true,
-			NetworkMode:     "host",
-			Binds:           mountBinds,
-		}
-		_, err := e.docker.Create(containerConfig, hostConfig,
-			&network.NetworkingConfig{}, VNCServerContainerName)
-		if err != nil {
-			return err
-		}
-	}
-
-	execCmd := []string{"/noVNC/utils/websockify/run",
-		"--web", "/noVNC",
-		"--unix-target", "/vm/" + vncID + "/vnc",
-		port}
-
-	execConfig := types.ExecConfig{
-		Detach: true,
-		Cmd:    execCmd,
-	}
-
-	err = e.docker.Exec(vncContainer.Names[0], execConfig)
-
-	return err
-}
+//func (e Engine) setVNC(vncID string, port string) error {
+//
+//	vncContainer, err := e.docker.Search(VNCServerContainerName)
+//	if err != nil {
+//		log.WithFields(log.Fields{
+//			"error":     err.Error(),
+//			"container": VNCContainerImage,
+//		}).Warn("VNC container was not found")
+//
+//		mountBinds := []string{
+//			fmt.Sprintf("%v/data:/vm", internal.GetDefaultWorkDir())}
+//
+//		containerConfig := &container.Config{
+//			Image:    VNCContainerImage,
+//			Hostname: VNCServerContainerName,
+//			Cmd:      nil,
+//			Env:      nil,
+//			Labels:   nil,
+//		}
+//
+//		hostConfig := &container.HostConfig{
+//			Privileged:      true,
+//			PublishAllPorts: true,
+//			NetworkMode:     "host",
+//			Binds:           mountBinds,
+//		}
+//		_, err := e.docker.Create(containerConfig, hostConfig,
+//			&network.NetworkingConfig{}, VNCServerContainerName)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+//	execCmd := []string{"/noVNC/utils/websockify/run",
+//		"--web", "/noVNC",
+//		"--unix-target", "/vm/" + vncID + "/vnc",
+//		port}
+//
+//	execConfig := types.ExecConfig{
+//		Detach: true,
+//		Cmd:    execCmd,
+//	}
+//
+//	err = e.docker.Exec(vncContainer.Names[0], execConfig)
+//
+//	return err
+//}

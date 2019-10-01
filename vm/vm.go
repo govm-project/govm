@@ -46,10 +46,8 @@ type NetworkingOptions struct {
 
 // ComposeConfig defines a VMs orchestration template
 type ComposeConfig struct {
-	VMs []Instance `yaml:"vms"`
-	// TODO: Implement a mechanism for creating custom networks
-	//Networks  []Network `yaml:"networks"`
-	Namespace string `yaml:"namespace"`
+	VMs       []Instance `yaml:"vms"`
+	Namespace string     `yaml:"namespace"`
 }
 
 //Instance contains all VM's attributes
@@ -65,17 +63,15 @@ type Instance struct {
 	UserData         string            `yaml:"user-data"`
 	Cloud            bool              `yaml:"cloud"`
 	Efi              bool              `yaml:"efi"`
-	generateUserData bool              `yaml:"userdata"`
-	containerID      string            `yaml:"container-id"`
 	VNCPort          int64             `yaml:"vnc-port"`
 	NetOpts          NetworkingOptions `yaml:"network"`
 	Shares           []string          `yaml:"shares"`
 	ContainerEnvVars []string          `yaml:"ContainerEnvVars"`
 }
 
+// nolint: funlen
 // Check validates and fixes VMs values.
 func (ins *Instance) Check() (err error) {
-
 	ins.ParentImage, err = internal.CheckFilePath(ins.ParentImage)
 	if err != nil {
 		return
@@ -104,7 +100,7 @@ func (ins *Instance) Check() (err error) {
 				}
 			}
 			if !validShebang {
-				err = fmt.Errorf("Unable to determine the user data content")
+				err = fmt.Errorf("unable to determine the user data content")
 				return
 			}
 		} else {
@@ -150,7 +146,6 @@ func (ins *Instance) Check() (err error) {
 					"share": share[0],
 				}).Fatal("Host field is not a directory.")
 			}
-
 		}
 	}
 
@@ -162,7 +157,7 @@ func (ins *Instance) Check() (err error) {
 	vmDataDirectory := ins.Workdir + "/data/" + ins.Name
 	err = os.MkdirAll(vmDataDirectory, 0740) // nolint: gas
 	if err != nil {
-		err = fmt.Errorf("Unable to create: %s", vmDataDirectory)
+		err = fmt.Errorf("unable to create: %s", vmDataDirectory)
 		return
 	}
 
@@ -208,10 +203,8 @@ func NewSize(model string, sockets, cpus, cores, threads, ram, disk int) Size {
 
 	if model != "" {
 		vmSize.CPUModel = model
-	} else {
-		if vmxSupport() {
-			vmSize.CPUModel = "host"
-		}
+	} else if vmxSupport() {
+		vmSize.CPUModel = "host"
 	}
 
 	if sockets != 0 {

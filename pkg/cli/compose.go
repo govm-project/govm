@@ -13,6 +13,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// nolint: gochecknoglobals
 var composeCommand = cli.Command{
 	Name:    "compose",
 	Aliases: []string{"co"},

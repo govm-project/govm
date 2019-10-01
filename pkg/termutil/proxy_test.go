@@ -9,6 +9,7 @@ import (
 	is "gotest.tools/assert/cmp"
 )
 
+// nolint: funlen
 func TestEscapeProxyRead(t *testing.T) {
 	escapeKeys, _ := ToBytes("")
 	keys, _ := ToBytes("a")

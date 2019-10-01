@@ -8,6 +8,7 @@ import (
 	cli "gopkg.in/urfave/cli.v2"
 )
 
+// nolint: gochecknoglobals
 var sshCommand = cli.Command{
 	Name:  "ssh",
 	Usage: "ssh into a running VM",

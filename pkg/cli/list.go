@@ -10,6 +10,7 @@ import (
 	cli "gopkg.in/urfave/cli.v2"
 )
 
+// nolint: gochecknoglobals
 var listCommand = cli.Command{
 	Name:    "list",
 	Aliases: []string{"ls"},
@@ -58,7 +59,7 @@ var listCommand = cli.Command{
 		err = tfortools.OutputToTemplate(os.Stdout, "format", format, instances, nil)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, tfortools.GenerateUsageDecorated("format", instances, nil))
-			return fmt.Errorf("Unable to execute template : %v", err)
+			return fmt.Errorf("unable to execute template : %v", err)
 		}
 
 		return nil

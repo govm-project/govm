@@ -15,7 +15,7 @@ import (
 
 var (
 	// ErrInvalidState is returned if the state of the terminal is invalid.
-	ErrInvalidState = errors.New("Invalid terminal state")
+	ErrInvalidState = errors.New("invalid terminal state")
 )
 
 // State represents the state of the terminal.
@@ -93,7 +93,7 @@ func handleInterrupt(fd uintptr, state *State) {
 			fmt.Println()
 			signal.Stop(sigchan)
 			close(sigchan)
-			restoreTerminal(fd, state)
+			_ = restoreTerminal(fd, state)
 			// os.Exit(1)
 		}
 	}()

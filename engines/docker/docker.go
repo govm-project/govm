@@ -27,7 +27,6 @@ type Docker struct {
 
 // NewDockerClient returns a new Docker service client.
 func NewDockerClient() *Docker {
-
 	SetAPIVersion()
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -49,7 +48,6 @@ func (d *Docker) PullImage(image string) error {
 
 // Exec executes commands inside a running container
 func (d *Docker) Exec(containerName string, execConfig types.ExecConfig) error {
-
 	resp, err := d.ContainerExecCreate(d.ctx, containerName, execConfig)
 	if err != nil {
 		return err
@@ -63,7 +61,6 @@ func (d *Docker) Exec(containerName string, execConfig types.ExecConfig) error {
 // Create creates a new docker container
 func (d *Docker) Create(containerConfig *container.Config, hostConfig *container.HostConfig,
 	networkConfig *network.NetworkingConfig, name string) (string, error) {
-
 	if !d.ImageExists(containerConfig.Image) {
 		log.Printf("Pulling %v image", containerConfig.Image)
 		err := d.PullImage(containerConfig.Image)
@@ -79,7 +76,6 @@ func (d *Docker) Create(containerConfig *container.Config, hostConfig *container
 
 // Start starts a previously created container.
 func (d *Docker) Start(id, name string) error {
-
 	if id == "" {
 		container, err := d.Search(name)
 		if err != nil {
@@ -125,8 +121,8 @@ func (d *Docker) ImageExists(name string) bool {
 }
 
 // Inspect inspects and return details about an specific container.
-func (d *Docker) Inspect(ID string) (types.ContainerJSON, error) {
-	return d.ContainerInspect(d.ctx, ID)
+func (d *Docker) Inspect(id string) (types.ContainerJSON, error) {
+	return d.ContainerInspect(d.ctx, id)
 }
 
 // List lists all docker-based VM instances that mee the passed filters
@@ -154,8 +150,9 @@ func (d *Docker) Remove(id string) error {
 		})
 }
 
-// SetAPIVersion gets local docker server API version.
+// nolint: godox
 // TODO: Investigate how we can replace the exec.Command approach
+// SetAPIVersion gets local docker server API version.
 func SetAPIVersion() {
 	cmd := exec.Command("docker", "version", "--format", "{{.Server.APIVersion}}")
 	cmdOutput := &bytes.Buffer{}
@@ -165,6 +162,6 @@ func SetAPIVersion() {
 	if err != nil {
 		log.Fatalf("Error getting Docker Server API version: %v", err)
 	}
-	apiVersion := strings.TrimSpace(string(cmdOutput.Bytes()))
+	apiVersion := strings.TrimSpace(cmdOutput.String())
 	_ = os.Setenv("DOCKER_API_VERSION", apiVersion)
 }

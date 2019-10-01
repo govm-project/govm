@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// nolint: gochecknoglobals
 var removeCommand = cli.Command{
 	Name:    "remove",
 	Aliases: []string{"delete", "rm", "del"},

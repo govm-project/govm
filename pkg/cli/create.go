@@ -13,6 +13,7 @@ import (
 	cli "gopkg.in/urfave/cli.v2"
 )
 
+// nolint: gochecknoglobals
 var createCommand = cli.Command{
 	Name:      "create",
 	Aliases:   []string{"c"},

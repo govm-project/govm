@@ -4,10 +4,8 @@ import (
 	"os"
 )
 
-var stdTerm = NewTerminal(os.Stdin, os.Stdout, os.Stderr)
-
 func StdTerminal() *Terminal {
-	return stdTerm
+	return NewTerminal(os.Stdin, os.Stdout, os.Stderr)
 }
 
 func In() *os.File {

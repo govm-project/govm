@@ -10,6 +10,7 @@ import (
 	cli "gopkg.in/urfave/cli.v2"
 )
 
+// nolint: gochecknoglobals
 var startCommand = cli.Command{
 	Name:    "start",
 	Aliases: []string{"up", "s"},

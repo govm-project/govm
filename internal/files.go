@@ -12,20 +12,19 @@ import (
 
 // CheckFilePath verifies and fixes a file path
 func CheckFilePath(path string) (string, error) {
-
 	if strings.HasPrefix(path, "~/") {
 		path = strings.Replace(path, "~", GetUserHomePath(), 1)
 	}
 
 	imgArg, err := os.Stat(path)
 	if err != nil {
-		return path, fmt.Errorf("File %v does not exist", path)
+		return path, fmt.Errorf("file %v does not exist", path)
 	}
 
 	if pathDir := filepath.Dir(path); pathDir == "." {
 		pathDir, err = os.Getwd()
 		if err != nil {
-			return path, fmt.Errorf("File's absolute path cannot be constructed for  %v", path)
+			return path, fmt.Errorf("file's absolute path cannot be constructed for  %v", path)
 		}
 		path = fmt.Sprintf("%v/%v", pathDir, path)
 	}
@@ -39,7 +38,6 @@ func CheckFilePath(path string) (string, error) {
 }
 
 func GetUserHomePath() string {
-
 	currentUser, err := user.Current()
 	if err != nil {
 		log.Warn("Unable to determine $HOME")
