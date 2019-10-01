@@ -43,7 +43,7 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) { // nolint: fun
 			(spec.Size.Sockets * spec.Size.Cores * spec.Size.Threads),
 			spec.Size.RAM,
 		),
-		fmt.Sprintf("COW_SIZE=%dG", spec.Size.DISK),
+		fmt.Sprintf("COW_SIZE=%d", spec.Size.DISK),
 	}
 	env = append(env, spec.ContainerEnvVars...)
 
@@ -96,6 +96,7 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) { // nolint: fun
 			"websockifyPort": vncPort,
 			"dataDir":        vmDataDirectory,
 			"namespace":      spec.Namespace,
+			"govmType":       "instance",
 			"vmName":         spec.Name,
 		},
 	}
@@ -155,9 +156,9 @@ func (e Engine) Stop(id string) error {
 func (e Engine) List(namespace string, all bool) ([]vm.Instance, error) {
 	listArgs := filters.NewArgs()
 	instances := []vm.Instance{}
-	listArgs.Add("ancestor", VMLauncherContainerImage)
-	if !all {
-		listArgs.Add("label", "namespace="+namespace)
+	listArgs.Add("label", "namespace="+namespace)
+	if all {
+		listArgs.Add("label", "govmType=instance")
 	}
 
 	containers, err := e.docker.List(listArgs)

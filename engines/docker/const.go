@@ -2,7 +2,7 @@ package docker
 
 // Container Images
 const (
-	VMLauncherContainerImage = "govm/govm"
+	VMLauncherContainerImage = "govm/govm:latest"
 	VNCContainerImage        = "govm/novnc-server"
 )
 
