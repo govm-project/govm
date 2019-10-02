@@ -7,8 +7,18 @@ before:
     # you may remove this if you don't need go generate
     - go generate ./...
 builds:
-- env:
-  - CGO_ENABLED=0
+-
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - freebsd
+    - linux
+  goarch:
+      - amd64
+      - arm
+      - arm64
+  ldflags:
+     - -s -w -X main.version={{.Tag}}-{{.ShortCommit}}
 archive:
   replacements:
     linux: Linux

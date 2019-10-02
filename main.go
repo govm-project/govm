@@ -8,11 +8,13 @@ import (
 	clilib "gopkg.in/urfave/cli.v2"
 )
 
+var version = "undefined"
+
 func main() {
 	// Custom version printer to show the Revision
 	revision := ""
 	clilib.VersionPrinter = func(c *clilib.Context) {
-		fmt.Fprintf(c.App.Writer, "%s version %s", c.App.Name, c.App.Version)
+		fmt.Fprintf(c.App.Writer, "%s version %s", c.App.Name, version)
 		if revision != "" {
 			fmt.Fprintf(c.App.Writer, " revision %s", revision)
 		}
