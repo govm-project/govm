@@ -37,6 +37,7 @@ func CheckFilePath(path string) (string, error) {
 	return filepath.Abs(path)
 }
 
+// GetUserHomePath gets the users Home Path
 func GetUserHomePath() string {
 	currentUser, err := user.Current()
 	if err != nil {

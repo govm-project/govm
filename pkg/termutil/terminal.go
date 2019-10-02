@@ -5,13 +5,18 @@ import (
 	"os"
 )
 
+// ErrNoTTY defines the errormessage to return when a terminal is not a tty
 var ErrNoTTY = fmt.Errorf("not a TTY")
 
+// Terminal describes a terminal it stores file pointers to the in, out and
+// error file handers and the state of the in and output
 type Terminal struct {
 	in, out, err      *os.File
 	inState, outState *State
 }
 
+// NewTerminal returns a pointer to a new Terminal struct using the given in,
+// out and err files as files for input, output and error handling.
 func NewTerminal(in, out, err *os.File) *Terminal {
 	if err == nil {
 		err = out
@@ -24,22 +29,27 @@ func NewTerminal(in, out, err *os.File) *Terminal {
 	}
 }
 
+// In returns the pointer to the input of the terminal the method is called on
 func (t *Terminal) In() *os.File {
 	return t.in
 }
 
+// Out returns the pointer to the output of the terminal the method is called on
 func (t *Terminal) Out() *os.File {
 	return t.out
 }
 
+// Err returns the pointer to the error of the terminal the method is called on
 func (t *Terminal) Err() *os.File {
 	return t.err
 }
 
+// IsTTY returns true if the terminal the method is called on is a tty
 func (t *Terminal) IsTTY() bool {
 	return isTerminal(t.in.Fd())
 }
 
+// MakeRaw sets the terminal output to raw
 func (t *Terminal) MakeRaw() error {
 	if os.Getenv("NORAW") != "" {
 		return nil
@@ -63,6 +73,7 @@ func (t *Terminal) MakeRaw() error {
 	return nil
 }
 
+// Restore restores the terminal by setting the input and output state to nil
 func (t *Terminal) Restore() error {
 	if !t.IsTTY() {
 		return ErrNoTTY
@@ -83,6 +94,7 @@ func (t *Terminal) Restore() error {
 	return nil
 }
 
+// GetState returns the current state of the terminal the method is called on
 func (t *Terminal) GetState() (*Termios, error) {
 	if !t.IsTTY() {
 		return nil, ErrNoTTY
@@ -91,6 +103,8 @@ func (t *Terminal) GetState() (*Termios, error) {
 	return getTermios(t.in.Fd())
 }
 
+// GetWinsize returns the current window size of the terminal the method is
+// called on
 func (t *Terminal) GetWinsize() (*Winsize, error) {
 	if !t.IsTTY() {
 		return nil, ErrNoTTY
@@ -99,6 +113,7 @@ func (t *Terminal) GetWinsize() (*Winsize, error) {
 	return getWinsize(t.in.Fd())
 }
 
+// SetWinsize sets the window size of terminal the method is called on
 func (t *Terminal) SetWinsize(ws *Winsize) error {
 	if !t.IsTTY() {
 		return ErrNoTTY
@@ -107,6 +122,7 @@ func (t *Terminal) SetWinsize(ws *Winsize) error {
 	return setWinsize(t.in.Fd(), ws)
 }
 
+// Close closes the terminal it is called on
 func (t *Terminal) Close() error {
 	if err := t.out.Close(); err != nil {
 		return err
