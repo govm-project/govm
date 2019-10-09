@@ -45,6 +45,7 @@ func (r *escapeProxy) Read(buf []byte) (int, error) {
 		preserve = append(preserve, r.escapeKeys[:r.escapeKeyPos]...)
 		preserve = append(preserve, buf...)
 		r.escapeKeyPos = 0
+
 		copy(buf[0:nr], preserve)
 	}
 
@@ -52,6 +53,7 @@ func (r *escapeProxy) Read(buf []byte) (int, error) {
 		if r.escapeKeyPos > 0 {
 			preserve()
 		}
+
 		return nr, err
 	}
 
@@ -59,6 +61,7 @@ func (r *escapeProxy) Read(buf []byte) (int, error) {
 		if r.escapeKeyPos > 0 {
 			preserve()
 		}
+
 		return nr, nil
 	}
 
@@ -74,5 +77,6 @@ func (r *escapeProxy) Read(buf []byte) (int, error) {
 	// If later on we find that this is not the escape sequence, we'll add the
 	// keys back
 	r.escapeKeyPos++
+
 	return nr - r.escapeKeyPos, nil
 }

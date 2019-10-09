@@ -26,6 +26,7 @@ func CheckFilePath(path string) (string, error) {
 		if err != nil {
 			return path, fmt.Errorf("file's absolute path cannot be constructed for  %v", path)
 		}
+
 		path = fmt.Sprintf("%v/%v", pathDir, path)
 	}
 
@@ -44,5 +45,6 @@ func GetUserHomePath() string {
 		log.Warn("Unable to determine $HOME")
 		log.Error("Please specify -workdir and -pubkey")
 	}
+
 	return currentUser.HomeDir
 }

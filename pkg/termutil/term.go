@@ -35,9 +35,11 @@ func restoreTerminal(fd uintptr, state *State) error {
 	if state == nil {
 		return ErrInvalidState
 	}
+
 	if err := tcset(fd, &state.termios); err != 0 {
 		return err
 	}
+
 	return nil
 }
 
@@ -60,7 +62,9 @@ func disableEcho(fd uintptr, state *State) error {
 	if err := tcset(fd, &newState); err != 0 {
 		return err
 	}
+
 	handleInterrupt(fd, state)
+
 	return nil
 }
 
@@ -87,6 +91,7 @@ func setRawTerminalOutput(fd uintptr) (*State, error) {
 func handleInterrupt(fd uintptr, state *State) {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, os.Interrupt)
+
 	go func() {
 		for range sigchan {
 			// quit cleanly and the new terminal item is on a new line

@@ -87,6 +87,7 @@ func (ins *Instance) Check() (err error) {
 		if err != nil {
 			// Look for a script verifying the shebang
 			var validShebang bool
+
 			validShebangs := []string{
 				"#cloud-config",
 				"#!/bin/sh",
@@ -94,11 +95,13 @@ func (ins *Instance) Check() (err error) {
 				"#!/usr/bin/env python",
 			}
 			_, shebang, _ := bufio.ScanLines([]byte(ins.UserData), true)
+
 			for _, sb := range validShebangs {
 				if string(shebang) == sb {
 					validShebang = true
 				}
 			}
+
 			if !validShebang {
 				err = fmt.Errorf("unable to determine the user data content")
 				return
@@ -126,6 +129,7 @@ func (ins *Instance) Check() (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	ins.SSHPublicKeyFile = string(key)
 
 	// Check if there are any VM Shares (shared directories) and validate them
@@ -155,6 +159,7 @@ func (ins *Instance) Check() (err error) {
 	}
 
 	vmDataDirectory := ins.Workdir + "/data/" + ins.Name
+
 	err = os.MkdirAll(vmDataDirectory, 0740) // nolint: gas
 	if err != nil {
 		err = fmt.Errorf("unable to create: %s", vmDataDirectory)
@@ -191,6 +196,7 @@ func (ins *Instance) Check() (err error) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		ins.UserData = vmDataDirectory + "/user_data"
 	}
 
@@ -270,6 +276,7 @@ func GetSizeFromFlavor(flavor string) (size Size) {
 	default:
 		size = NewSize(cpuModel, 2, 2, 2, 2, 4096, DiskDefaultSizeGB)
 	}
+
 	return
 }
 
@@ -279,5 +286,6 @@ func vmxSupport() bool {
 		log.Error(err)
 		return false
 	}
+
 	return true
 }

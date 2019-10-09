@@ -63,13 +63,16 @@ func (t *Terminal) MakeRaw() error {
 	if err != nil {
 		return err
 	}
+
 	t.inState = is
 
 	os, err := setRawTerminalOutput(t.out.Fd())
 	if err != nil {
 		return err
 	}
+
 	t.outState = os
+
 	return nil
 }
 
@@ -83,14 +86,18 @@ func (t *Terminal) Restore() error {
 		if err := restoreTerminal(t.in.Fd(), t.inState); err != nil {
 			return err
 		}
+
 		t.inState = nil
 	}
+
 	if t.outState != nil {
 		if err := restoreTerminal(t.out.Fd(), t.outState); err != nil {
 			return err
 		}
+
 		t.outState = nil
 	}
+
 	return nil
 }
 
@@ -127,5 +134,6 @@ func (t *Terminal) Close() error {
 	if err := t.out.Close(); err != nil {
 		return err
 	}
+
 	return t.in.Close()
 }

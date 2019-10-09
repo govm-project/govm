@@ -19,6 +19,7 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 	container, err := e.docker.Inspect(id)
 	if err != nil {
 		fullName := internal.GenerateContainerName(namespace, id)
+
 		container, err = e.docker.Inspect(fullName)
 		if err != nil {
 			return err
@@ -51,12 +52,14 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 	if err != nil {
 		return err
 	}
+
 	defer conn.Close()
 
 	sess, err := conn.NewSession()
 	if err != nil {
 		return err
 	}
+
 	defer sess.Close()
 
 	sess.Stdin = term.In()
@@ -72,6 +75,7 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 	if err != nil {
 		return err
 	}
+
 	defer handleError(term.Restore())
 
 	err = sess.RequestPty(os.Getenv("TERM"), int(sz.Height), int(sz.Width), nil)
@@ -87,6 +91,7 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 	// If our terminal window changes, signal the ssh connection
 	stopch := make(chan struct{})
 	defer close(stopch)
+
 	go func() {
 		sigch := make(chan os.Signal, 1)
 		signal.Notify(sigch, syscall.SIGWINCH)

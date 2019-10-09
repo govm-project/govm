@@ -15,17 +15,20 @@ func HomeDir() string {
 				return home
 			}
 		}
+
 		if home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH"); home != "" {
 			if _, err := os.Stat(home); err == nil {
 				return home
 			}
 		}
+
 		if userProfile := os.Getenv("USERPROFILE"); userProfile != "" {
 			if _, err := os.Stat(userProfile); err == nil {
 				return userProfile
 			}
 		}
 	}
+
 	return os.Getenv("HOME")
 }
 
@@ -34,5 +37,6 @@ func ExpandPath(path string) string {
 	if strings.HasPrefix(path, "~") {
 		path = filepath.Join(HomeDir(), path[1:])
 	}
+
 	return os.ExpandEnv(path)
 }

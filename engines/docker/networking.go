@@ -19,6 +19,7 @@ type Network struct {
 func VerifyNetwork(ctx context.Context, cli *client.Client, name string) error {
 	filters := filters.NewArgs()
 	filters.Add("name", name)
+
 	_, err := cli.NetworkList(ctx, types.NetworkListOptions{
 		Filters: filters,
 	})
@@ -26,5 +27,6 @@ func VerifyNetwork(ctx context.Context, cli *client.Client, name string) error {
 		glog.Error(err)
 		return err
 	}
+
 	return nil
 }

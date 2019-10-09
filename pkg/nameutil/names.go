@@ -22,10 +22,12 @@ func ParseContainerName(contname string) (ns, vmname string, err error) {
 	if len(parts) != 3 {
 		return "", "", fmt.Errorf("%q has an invalid container name", contname)
 	}
+
 	if parts[0] != containerPrefix {
 		return parts[1], parts[2], fmt.Errorf(
 			"%q has an invalid prefix (should be %q)", contname, containerPrefix)
 	}
+
 	return parts[1], parts[2], nil
 }
 

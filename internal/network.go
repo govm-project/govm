@@ -9,6 +9,7 @@ import (
 // FindAvailablePort helps to find a tcp port
 func FindAvailablePort() int {
 	log.Debug("Looking for an available port for VNC")
+
 	address, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
 	if err != nil {
 		panic(err)

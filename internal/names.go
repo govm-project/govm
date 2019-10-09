@@ -25,10 +25,12 @@ func ParseContainerName(contname string) (ns, vmname string, err error) {
 	if len(parts) != 3 {
 		return "", "", fmt.Errorf("%q has an invalid container name", contname)
 	}
+
 	if parts[0] != containerPrefix {
 		return parts[1], parts[2], fmt.Errorf(
 			"%q has an invalid prefix (should be %q)", contname, containerPrefix)
 	}
+
 	return parts[1], parts[2], nil
 }
 
@@ -39,6 +41,7 @@ func DefaultNamespace() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("get current user: %v", err)
 	}
+
 	return u.Username, nil
 }
 
@@ -53,12 +56,14 @@ func GetDefaultWorkDir() string {
 	homeDir := GetUserHomePath()
 	workDir := fmt.Sprintf("%v/vms", homeDir)
 	_, err := os.Stat(workDir)
+
 	if err != nil {
 		log.WithField("workdir", workDir).Warn(
 			"Work Directory does not exist")
 
 		log.WithField("workdir", workDir+"/data").Info(
 			"Creating workdir")
+
 		err = os.MkdirAll(workDir+"/data", 0755) // nolint: gas
 		if err != nil {
 			log.Fatal(err)
@@ -66,6 +71,7 @@ func GetDefaultWorkDir() string {
 
 		fmt.Printf("Creating %s", workDir+"/images")
 		err = os.Mkdir(workDir+"/images", 0755) // nolint: gas
+
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -53,6 +53,7 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) { // nolint: fun
 	if spec.Efi {
 		qemuParams = append(qemuParams, "-bios /OVMF.fd ")
 	}
+
 	if spec.Cloud {
 		env = append(env, "CLOUD=yes")
 		env = append(env, vm.CloudInitOpts)
@@ -68,6 +69,7 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) { // nolint: fun
 	// Append guest directory/ies to env (container's environment).
 	if len(spec.Shares) > 0 {
 		defaultMountBinds = append(defaultMountBinds, spec.Shares...)
+
 		var sharedDirs string
 		for _, share := range spec.Shares {
 			// Get the guest directory part from the string and pass
@@ -75,6 +77,7 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) { // nolint: fun
 			// will handle these shared directories.
 			sharedDirs += strings.Split(share, ":")[1] + " "
 		}
+
 		env = append(env, "SHARED_DIRS="+sharedDirs)
 	}
 
@@ -130,6 +133,7 @@ func (e Engine) Create(spec vm.Instance) (id string, err error) { // nolint: fun
 	}
 
 	id, err = e.docker.Create(containerConfig, hostConfig, networkConfig, containerName)
+
 	return id, err
 }
 
@@ -139,10 +143,12 @@ func (e Engine) Start(namespace, id string) error {
 	if err != nil {
 		fullName := internal.GenerateContainerName(namespace, id)
 		container, err = e.docker.Inspect(fullName)
+
 		if err != nil {
 			return err
 		}
 	}
+
 	return e.docker.Start(container.ID, "")
 }
 
@@ -156,7 +162,9 @@ func (e Engine) Stop(id string) error {
 func (e Engine) List(namespace string, all bool) ([]vm.Instance, error) {
 	listArgs := filters.NewArgs()
 	instances := []vm.Instance{}
+
 	listArgs.Add("label", "namespace="+namespace)
+
 	if all {
 		listArgs.Add("label", "govmType=instance")
 	}
@@ -172,7 +180,9 @@ func (e Engine) List(namespace string, all bool) ([]vm.Instance, error) {
 			containerIP = net.IPAddress
 			break
 		}
+
 		vncPort, _ := strconv.ParseInt(container.Labels["websockifyPort"], 10, 32)
+
 		instances = append(instances, vm.Instance{
 			ID:        container.ID[:10],
 			Name:      container.Labels["vmName"],
@@ -192,6 +202,7 @@ func (e Engine) Delete(namespace, id string) error {
 	if err != nil {
 		fullName := internal.GenerateContainerName(namespace, id)
 		container, err = e.docker.Inspect(fullName)
+
 		if err != nil {
 			return err
 		}
@@ -203,6 +214,7 @@ func (e Engine) Delete(namespace, id string) error {
 	pid, err := ioutil.ReadFile(dataPath + "/websockifyPid")
 	if err == nil {
 		websockifyPid, _ := strconv.Atoi(string(pid))
+
 		websockifyProcess, err := os.FindProcess(websockifyPid)
 		if err != nil {
 			return err

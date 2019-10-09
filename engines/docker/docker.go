@@ -28,6 +28,7 @@ type Docker struct {
 // NewDockerClient returns a new Docker service client.
 func NewDockerClient() *Docker {
 	SetAPIVersion()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		panic(err)
@@ -42,7 +43,9 @@ func (d *Docker) PullImage(image string) error {
 	if err != nil {
 		return err
 	}
+
 	_, err = io.Copy(ioutil.Discard, out)
+
 	return err
 }
 
@@ -55,6 +58,7 @@ func (d *Docker) Exec(containerName string, execConfig types.ExecConfig) error {
 
 	err = d.ContainerExecStart(d.ctx, resp.ID,
 		types.ExecStartCheck{Detach: true, Tty: false})
+
 	return err
 }
 
@@ -64,10 +68,12 @@ func (d *Docker) Create(containerConfig *container.Config, hostConfig *container
 	if !d.ImageExists(containerConfig.Image) {
 		log.Printf("Pulling %v image", containerConfig.Image)
 		err := d.PullImage(containerConfig.Image)
+
 		if err != nil {
 			return "", err
 		}
 	}
+
 	resp, err := d.ContainerCreate(d.ctx, containerConfig, hostConfig,
 		networkConfig, name)
 
@@ -81,6 +87,7 @@ func (d *Docker) Start(id, name string) error {
 		if err != nil {
 			return err
 		}
+
 		id = container.ID
 	}
 
@@ -101,6 +108,7 @@ func (d *Docker) Search(name string) (types.Container, error) {
 			return container, nil
 		}
 	}
+
 	return types.Container{}, err
 }
 
@@ -108,6 +116,7 @@ func (d *Docker) Search(name string) (types.Container, error) {
 func (d *Docker) ImageExists(name string) bool {
 	fltr := filters.NewArgs()
 	fltr.Add("reference", "govm/govm")
+
 	images, err := d.ImageList(d.ctx,
 		types.ImageListOptions{
 			All:     false,
@@ -117,6 +126,7 @@ func (d *Docker) ImageExists(name string) bool {
 	if err != nil || len(images) == 0 {
 		return false
 	}
+
 	return true
 }
 
@@ -162,6 +172,7 @@ func SetAPIVersion() {
 	if err != nil {
 		log.Fatalf("Error getting Docker Server API version: %v", err)
 	}
+
 	apiVersion := strings.TrimSpace(cmdOutput.String())
 	_ = os.Setenv("DOCKER_API_VERSION", apiVersion)
 }

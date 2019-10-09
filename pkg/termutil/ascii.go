@@ -63,5 +63,6 @@ next:
 			codes = append(codes, key[0])
 		}
 	}
+
 	return codes, nil
 }

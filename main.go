@@ -11,13 +11,8 @@ import (
 var version = "undefined"
 
 func main() {
-	// Custom version printer to show the Revision
-	revision := ""
 	clilib.VersionPrinter = func(c *clilib.Context) {
 		fmt.Fprintf(c.App.Writer, "%s version %s", c.App.Name, version)
-		if revision != "" {
-			fmt.Fprintf(c.App.Writer, " revision %s", revision)
-		}
 		fmt.Fprintln(c.App.Writer)
 	}
 

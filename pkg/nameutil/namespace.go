@@ -12,5 +12,6 @@ func DefaultNamespace() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("get current user: %v", err)
 	}
+
 	return u.Username, nil
 }
