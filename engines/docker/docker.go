@@ -160,9 +160,9 @@ func (d *Docker) Remove(id string) error {
 		})
 }
 
+// SetAPIVersion gets local docker server API version.
 // nolint: godox
 // TODO: Investigate how we can replace the exec.Command approach
-// SetAPIVersion gets local docker server API version.
 func SetAPIVersion() {
 	cmd := exec.Command("docker", "version", "--format", "{{.Server.APIVersion}}")
 	cmdOutput := &bytes.Buffer{}

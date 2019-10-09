@@ -32,4 +32,4 @@ script:
   - go test -v -race ./...               # Run all the tests with the race detector enabled
 
 after_success:
-  - codecov
+  -  bash <(curl -s https://codecov.io/bash)

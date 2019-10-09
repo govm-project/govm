@@ -69,8 +69,8 @@ type Instance struct {
 	ContainerEnvVars []string          `yaml:"ContainerEnvVars"`
 }
 
-// nolint: funlen
-// Check validates and fixes VMs values.
+// Check validates and fixes VMs values
+// nolint: gocyclo, funlen
 func (ins *Instance) Check() (err error) {
 	ins.ParentImage, err = internal.CheckFilePath(ins.ParentImage)
 	if err != nil {

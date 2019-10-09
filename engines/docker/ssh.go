@@ -14,6 +14,7 @@ import (
 	"github.com/govm-project/govm/pkg/termutil"
 )
 
+//SSHVM initializes the SSH bits for the vm ssh connection
 // nolint: funlen
 func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal) error {
 	container, err := e.docker.Inspect(id)

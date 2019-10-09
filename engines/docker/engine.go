@@ -15,14 +15,14 @@ import (
 	"github.com/docker/docker/api/types/network"
 )
 
-// nolint: typecheck
 // Engine stands an entry point for the docker container services
+// nolint: typecheck
 type Engine struct {
 	docker *Docker
 }
 
-// nolint: typecheck
 // Init initializes a the Engine's docker client
+// nolint: typecheck
 func (e *Engine) Init() {
 	e.docker = NewDockerClient()
 }
@@ -157,8 +157,8 @@ func (e Engine) Stop(id string) error {
 	return nil
 }
 
-// nolint: typecheck
 // List lists  all the Docker container-based VM instances
+// nolint: typecheck
 func (e Engine) List(namespace string, all bool) ([]vm.Instance, error) {
 	listArgs := filters.NewArgs()
 	instances := []vm.Instance{}
