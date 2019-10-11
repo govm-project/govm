@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
+	"path/filepath"
 	"strings"
 
 	"github.com/govm-project/govm/internal"
@@ -134,20 +136,33 @@ func (ins *Instance) Check() (err error) {
 
 	// Check if there are any VM Shares (shared directories) and validate them
 	if len(ins.Shares) > 0 {
-		for _, dir := range ins.Shares {
+		for i, dir := range ins.Shares {
 			share := strings.Split(dir, ":")
 			// Validate if the host share exists
-			stat, err := os.Stat(share[0])
+			usr, err := user.Current()
+			if err != nil {
+				return err
+			}
+			hostpath := share[0]
+			if hostpath == "~" {
+				hostpath = usr.HomeDir
+				ins.Shares[i] = hostpath + ":" + share[1]
+			} else if strings.HasPrefix(hostpath, "~/") {
+				hostpath = filepath.Join(usr.HomeDir, hostpath[2:])
+				ins.Shares[i] = hostpath + ":" + share[1]
+			}
+
+			stat, err := os.Stat(hostpath)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"share": share[0],
+					"share": hostpath,
 				}).Fatal("Host directory does not exists.")
 			}
 
 			// Validate if it's a directory
 			if !stat.IsDir() {
 				log.WithFields(log.Fields{
-					"share": share[0],
+					"share": hostpath,
 				}).Fatal("Host field is not a directory.")
 			}
 		}
