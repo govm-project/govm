@@ -94,6 +94,20 @@ func (d *Docker) Start(id, name string) error {
 	return d.ContainerStart(d.ctx, id, types.ContainerStartOptions{})
 }
 
+// Stop stops a previously started container.
+func (d *Docker) Stop(id, name string) error {
+	if id == "" {
+		container, err := d.Search(name)
+		if err != nil {
+			return err
+		}
+
+		id = container.ID
+	}
+
+	return d.ContainerStop(d.ctx, id, nil)
+}
+
 // Search searches a container from the running docker containers
 func (d *Docker) Search(name string) (types.Container, error) {
 	containers, err := d.ContainerList(d.ctx, types.ContainerListOptions{})
