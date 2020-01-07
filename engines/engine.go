@@ -9,6 +9,7 @@ import (
 type VMEngine interface {
 	CreateVM(spec vm.Instance) (string, error)
 	StartVM(namespace, id string) error
+	StopVM(namespace, id string) error
 	DeleteVM(namespace, id string) error
 	SSHVM(namespace, id, user, key string, term *termutil.Terminal) error
 	ListVM(namespace string, all bool) ([]vm.Instance, error)
