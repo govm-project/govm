@@ -164,7 +164,22 @@ func (e Engine) Stop(namespace, id string) error {
 		}
 	}
 
-	return e.docker.Stop(container.ID,"")
+	return e.docker.Stop(container.ID, "")
+}
+
+// Save saves a Docker container-based VM instance
+func (e Engine) Save(namespace, id string) error {
+	container, err := e.docker.Inspect(id)
+	if err != nil {
+		fullName := internal.GenerateContainerName(namespace, id)
+		container, err = e.docker.Inspect(fullName)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return e.docker.Save(container.ID, id)
 }
 
 // List lists  all the Docker container-based VM instances

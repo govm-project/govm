@@ -108,6 +108,35 @@ func (d *Docker) Stop(id, name string) error {
 	return d.ContainerStop(d.ctx, id, nil)
 }
 
+// Save saves a previously started container.
+func (d *Docker) Save(id, name string) error {
+	if id == "" {
+		container, err := d.Search(name)
+		if err != nil {
+			return err
+		}
+		id = container.ID
+	}
+
+	cmd := exec.Command("docker", "exec", id, "cp", "/image/image", "/tmp")
+	err := cmd.Run()
+	cmd = exec.Command("docker", "exec", id, "cp", "/data/cow_image.qcow2", "/tmp")
+	err = cmd.Run()
+	cmd = exec.Command("docker", "exec", id, "qemu-img", "rebase", "-f", "qcow2", "-b", "/tmp/image", "/tmp/cow_image.qcow2")
+	err = cmd.Run()
+	cmd = exec.Command("docker", "exec", id, "qemu-img", "commit", "tmp/cow_image.qcow2")
+	err = cmd.Run()
+
+	if err != nil {
+		return err
+	}
+	//idReturned, err := d.ContainerCommit(d.ctx, id, types.ContainerCommitOptions{Reference: "snaps:" + name})
+
+	//fmt.Println(idReturned)
+
+	return err
+}
+
 // Search searches a container from the running docker containers
 func (d *Docker) Search(name string) (types.Container, error) {
 	containers, err := d.ContainerList(d.ctx, types.ContainerListOptions{})
