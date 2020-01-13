@@ -164,7 +164,7 @@ func (e Engine) Stop(namespace, id string) error {
 		}
 	}
 
-	return e.docker.Stop(container.ID,"")
+	return e.docker.Stop(container.ID, "")
 }
 
 // List lists  all the Docker container-based VM instances

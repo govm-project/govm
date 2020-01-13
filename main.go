@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/govm-project/govm/pkg/cli"
-	clilib "gopkg.in/urfave/cli.v2"
+	clilib "github.com/urfave/cli/v2"
 )
 
 var version = "undefined"

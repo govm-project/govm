@@ -5,7 +5,7 @@ import (
 
 	"github.com/govm-project/govm/engines/docker"
 	"github.com/govm-project/govm/pkg/termutil"
-	cli "gopkg.in/urfave/cli.v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 // nolint: gochecknoglobals

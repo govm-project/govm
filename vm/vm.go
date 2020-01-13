@@ -70,7 +70,7 @@ type Instance struct {
 }
 
 // Check validates and fixes VMs values
-// nolint: gocyclo, funlen
+// nolint: gocyclo, funlen, gocognit
 func (ins *Instance) Check() (err error) {
 	ins.ParentImage, err = internal.CheckFilePath(ins.ParentImage)
 	if err != nil {

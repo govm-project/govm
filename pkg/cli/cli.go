@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/govm-project/govm/pkg/homedir"
 	"github.com/govm-project/govm/pkg/nameutil"
-	cli "gopkg.in/urfave/cli.v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 // New creates a new command line GoVM application

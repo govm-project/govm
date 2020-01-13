@@ -9,7 +9,7 @@ import (
 	"github.com/govm-project/govm/internal"
 	"github.com/govm-project/govm/vm"
 	log "github.com/sirupsen/logrus"
-	cli "gopkg.in/urfave/cli.v2"
+	cli "github.com/urfave/cli/v2"
 	yaml "gopkg.in/yaml.v2"
 )
 
