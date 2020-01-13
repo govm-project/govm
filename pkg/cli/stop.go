@@ -7,7 +7,7 @@ import (
 
 	"github.com/govm-project/govm/engines/docker"
 	log "github.com/sirupsen/logrus"
-	cli "gopkg.in/urfave/cli.v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 // nolint: gochecknoglobals
@@ -24,12 +24,12 @@ var stopCommand = cli.Command{
 			os.Exit(1)
 		}
 
-		namespace :=c.String("namespace")
+		namespace := c.String("namespace")
 		name := c.Args().First()
 
 		engine := docker.Engine{}
 		engine.Init()
-		err := engine.Stop(namespace,name)
+		err := engine.Stop(namespace, name)
 		if err != nil {
 			log.Fatalf("Error when stopping the GoVM Instance %v: %v", name, err)
 		}

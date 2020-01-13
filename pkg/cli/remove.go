@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/govm-project/govm/engines/docker"
-	cli "gopkg.in/urfave/cli.v2"
+	cli "github.com/urfave/cli/v2"
 
 	log "github.com/sirupsen/logrus"
 )

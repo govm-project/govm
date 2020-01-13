@@ -7,7 +7,7 @@ import (
 	"github.com/govm-project/govm/engines/docker"
 
 	"github.com/intel/tfortools"
-	cli "gopkg.in/urfave/cli.v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 // nolint: gochecknoglobals

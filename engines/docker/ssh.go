@@ -96,6 +96,7 @@ func (e *Engine) SSHVM(namespace, id, user, key string, term *termutil.Terminal)
 	go func() {
 		sigch := make(chan os.Signal, 1)
 		signal.Notify(sigch, syscall.SIGWINCH)
+
 		defer signal.Stop(sigch)
 		defer close(sigch)
 	outer:

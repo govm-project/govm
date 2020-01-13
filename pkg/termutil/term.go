@@ -98,8 +98,10 @@ func handleInterrupt(fd uintptr, state *State) {
 			fmt.Println()
 			signal.Stop(sigchan)
 			close(sigchan)
-			_ = restoreTerminal(fd, state)
-			// os.Exit(1)
+
+			if restoreTerminal(fd, state) != nil {
+				os.Exit(1)
+			}
 		}
 	}()
 }
