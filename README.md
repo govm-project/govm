@@ -16,10 +16,8 @@
 - Multi-Instances Compose
 - Custom hypervisor-level and qemu flags
 
-
 **The only Requirement**
 - Docker
-
 
 Quick Install (GNU/Linux based distribution)
 -------------------------------------------
@@ -29,9 +27,7 @@ Quick Install (GNU/Linux based distribution)
 ```
 tar -xzvf govm_<latest_govm_release>_linux_amd64.tar.gz
 sudo cp govm /usr/local/bin/
-
-# Make sure you have `/usr/local/bin` in your PATH, if not, run this command
-# export PATH=/usr/local/bin/:$PATH
+export PATH=/usr/local/bin/:$PATH
 ```
 3. Done, you're ready to go.
 
@@ -54,11 +50,13 @@ go build -o govm
 
 Launch your first VM (Ubuntu 16.04 cloud image)
 -----------------------------------------------
+- Download Ubuntu 16.04 cloud image
 ```
-# Download Ubuntu 16.04 cloud image
-curl -Ok https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
-# Launch your VM
-govm create --image xenial-server-cloudimg-amd64-disk1.img --cloud
+$ curl -Ok https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
+```
+- Launch your VM
+```
+$ govm create --image xenial-server-cloudimg-amd64-disk1.img --cloud
 ```
 
 
@@ -116,7 +114,7 @@ Lists all virtual machines that were created with the ``govm`` tool. It also sho
 
 *Output example*
 ```
-# govm list
+$ govm list
 ID         Name                   Namespace IP
 b9b5d3a288 test-14731             onmunoz   172.17.0.6
 4d6731b571 test-29652             onmunoz   172.17.0.5
@@ -127,7 +125,7 @@ e90608db45 wonderful-varahamihira onmunoz   172.17.0.2
 
 *Filtered output*
 ```
-# govm list -f '{{select (filterRegexp . "Name" "test-*") "IP"}}'
+$ govm list -f '{{select (filterRegexp . "Name" "test-*") "IP"}}'
 172.17.0.6
 172.17.0.5
 172.17.0.4
