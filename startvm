@@ -12,7 +12,7 @@
 : ${LAUNCHER:='qemu-system-x86_64'}
 : ${DNSMASQ_CONF_DIR:='/etc/dnsmasq.d'}
 : ${DNSMASQ:='/usr/sbin/dnsmasq'}
-: ${QEMU_CONF_DIR:='/etc/qemu-kvm'}
+: ${QEMU_CONF_DIR:='/etc/qemu'}
 : ${ENABLE_DHCP:='Y'}
 : ${DISABLE_VGA:='N'}
 
@@ -289,7 +289,9 @@ configureNetworks () {
 	    deviceID=$(setupBridge $iface "bridge")
 	    bridgeName="bridge$deviceID"
 	    # kvm configuration:
-	    echo allow $bridgeName >> $QEMU_CONF_DIR/bridge.conf
+	    echo allow $bridgeName >> $QEMU_CONF_DIR/bridge.conf || {
+                log "WARNING" "failed to allow $bridgeName in $QEMU_CONF_DIR/bridge.conf"
+            }
 	    KVM_NET_OPTS="$KVM_NET_OPTS -netdev bridge,br=$bridgeName,id=net$i"
 	else
 	    deviceID=($(setupBridge $iface "macvlan"))
