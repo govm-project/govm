@@ -59,17 +59,26 @@ if [ "$SHARED_DIRS" != "" ]; then
     done
 fi
 
-
-: ${KVM_OPTS:="\
+if [ -z "$KVM_OPTS" ]; then
+    KVM_OPTS="\
   -nodefaults \
   -device virtio-balloon-pci,id=balloon0 \
-  -realtime mlock=off \
   -msg timestamp=on \
   -chardev pty,id=charserial0 \
   -device isa-serial,chardev=charserial0,id=serial0 \
   -serial stdio \
   -object rng-random,filename=/dev/urandom,id=rng0 -device virtio-rng-pci,rng=rng0 \
-  "}
+  "
+
+    if ${LAUNCHER} -version | grep -q -E 'version [0-5]'; then
+        KVM_OPTS="${KVM_OPTS} -realtime mlock=off \
+  "
+    else
+        KVM_OPTS="${KVM_OPTS} -overcommit mem-lock=off \
+  "
+    fi
+fi
+
 # -serial telnet::4555,server,nowait \
 
 : ${KVM_CPU_OPTS:="-m 1024 -smp 4,sockets=4,cores=1,threads=1"}
