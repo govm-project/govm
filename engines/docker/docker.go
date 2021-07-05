@@ -68,7 +68,6 @@ func (d *Docker) Create(containerConfig *container.Config, hostConfig *container
 	if !d.ImageExists(containerConfig.Image) {
 		log.Printf("Pulling %v image", containerConfig.Image)
 		err := d.PullImage(containerConfig.Image)
-
 		if err != nil {
 			return "", err
 		}
