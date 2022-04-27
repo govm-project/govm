@@ -48,17 +48,24 @@ go build -o govm
 ```
 
 
-Launch your first VM (Ubuntu 16.04 cloud image)
+Launch your first VM (Ubuntu 20.04 cloud image)
 -----------------------------------------------
-- Download Ubuntu 16.04 cloud image
+- Download Ubuntu 20.04 cloud image
 ```
-$ curl -Ok https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
-```
-- Launch your VM
-```
-$ govm create --image xenial-server-cloudimg-amd64-disk1.img --cloud
+$ curl -Ok https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
 ```
 
+- Launch your VM
+```
+$ govm create --image focal-server-cloudimg-amd64.img --cloud
+```
+
+- Login into the VM
+```
+# You may need to wait some seconds to let the machine boot and be ready for ssh.
+govm list
+ssh ubuntu@172.17.0.2
+```
 
 Sub-commands
 ============
