@@ -32,7 +32,7 @@ case "$COPY_ON_WRITE" in
     [Yy1]* )
 	KVM_BLK_OPTS="-drive if=virtio,file=/data/cow_image.qcow2,format=qcow2,id=data"
 	if [ ! -f /data/cow_image.qcow2 ]; then
-	    qemu-img create -f qcow2 -o backing_file=/image/image /data/cow_image.qcow2 ${COW_SIZE}G
+	    qemu-img create -f qcow2 -F qcow2 -o backing_file=/image/image /data/cow_image.qcow2 ${COW_SIZE}G
 	fi
 	;;
     [Nn0]* )
