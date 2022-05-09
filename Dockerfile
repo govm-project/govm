@@ -3,7 +3,7 @@ MAINTAINER obed.n.munoz@gmail.com, erick.cardona.ruiz@gmail.com
 ENV container docker
 
 RUN apk update \
-&& apk add qemu-system-x86_64 xorriso cdrkit dnsmasq net-tools bridge-utils \
+&& apk add qemu-system-x86_64 cdrkit dnsmasq net-tools bridge-utils \
 iproute2 curl bash qemu-img \
 && ( apk add qemu-hw-display-qxl || true )
 
