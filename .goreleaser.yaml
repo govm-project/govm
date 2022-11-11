@@ -19,11 +19,12 @@ builds:
       - arm64
   ldflags:
      - -s -w -X main.version={{.Tag}}-{{.ShortCommit}}
-archive:
-  replacements:
-    linux: Linux
-    386: i386
-    amd64: x86_64
+archives:
+  -
+    replacements:
+      linux: Linux
+      386: i386
+      amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
