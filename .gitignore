@@ -183,3 +183,5 @@ tags
 
 # Custom
 *.img
+
+dist/
