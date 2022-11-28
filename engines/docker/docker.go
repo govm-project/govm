@@ -74,7 +74,7 @@ func (d *Docker) Create(containerConfig *container.Config, hostConfig *container
 	}
 
 	resp, err := d.ContainerCreate(d.ctx, containerConfig, hostConfig,
-		networkConfig, name)
+		networkConfig, nil, name)
 
 	return resp.ID, err
 }
