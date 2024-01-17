@@ -3,7 +3,7 @@ module github.com/govm-project/govm
 go 1.18
 
 require (
-	github.com/docker/docker v20.10.21+incompatible
+	github.com/docker/docker v20.10.27+incompatible
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.9
 	github.com/intel/tfortools v0.3.0
