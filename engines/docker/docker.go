@@ -56,8 +56,13 @@ func (d *Docker) Exec(containerName string, execConfig types.ExecConfig) error {
 		return err
 	}
 
-	err = d.ContainerExecStart(d.ctx, resp.ID,
+	_ = d.ContainerExecStart(d.ctx, resp.ID,
 		types.ExecStartCheck{Detach: true, Tty: false})
+
+	ins, err := d.ContainerExecInspect(d.ctx, resp.ID)
+	for ins.Running || err != nil {
+		ins, err = d.ContainerExecInspect(d.ctx, resp.ID)
+	}
 
 	return err
 }

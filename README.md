@@ -159,6 +159,15 @@ Connects through ssh to the specified virtual machine.
 | --user value | ssh login user                            | Yes      |
 | --key value  | private key path (default: ~/.ssh/id_rsa) | No       |
 
+save
+----
+
+Saves a GoVM Instance
+| Flag        | Description                     | Required | Default      |
+|-------------|---------------------------------|----------|--------------|
+| --stopVM    | Stop the VM During the Snapshot | No       | `false`      |
+| --out value | Path to backup file             | No       | `backup.img` |
+
 help
 ----
 
@@ -173,13 +182,15 @@ VERSION:
    0.0.0
 
 COMMANDS:
-     create, c                Create a new VM
-     list, ls                 List VMs
-     remove, delete, rm, del  Remove VMs
-     start, up, s             Start a GoVM Instance
-     compose, co              Deploy VMs from a compose config file
-     ssh                      ssh into a running VM
-     help, h                  Shows a list of commands or help for one command
+   create, c                Create a new VM
+   list, ls                 List VMs
+   remove, delete, rm, del  Remove VMs
+   start, up, s             Start a GoVM Instance
+   compose, co              Deploy VMs from a compose config file
+   ssh                      ssh into a running VM
+   stop, down, d            Stop a GoVM Instance
+   save, snapshot           Save a GoVM Instance
+   help, h                  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --workdir value  Alternate working directory. Default: ~/govm

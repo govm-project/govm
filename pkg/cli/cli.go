@@ -37,6 +37,7 @@ func New() (*cli.App, error) {
 			&composeCommand,
 			&sshCommand,
 			&stopCommand,
+			&saveCommand,
 		},
 	}, nil
 }
