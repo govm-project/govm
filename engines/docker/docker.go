@@ -29,7 +29,7 @@ type Docker struct {
 func NewDockerClient() *Docker {
 	SetAPIVersion()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
 	}
