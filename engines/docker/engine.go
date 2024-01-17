@@ -10,9 +10,11 @@ import (
 	"github.com/govm-project/govm/internal"
 	"github.com/govm-project/govm/vm"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
+	log "github.com/sirupsen/logrus"
 )
 
 // Engine stands an entry point for the docker container services
@@ -165,6 +167,104 @@ func (e Engine) Stop(namespace, id string) error {
 	}
 
 	return e.docker.Stop(container.ID, "")
+}
+
+// Save a Docker container-based VM instance
+func (e Engine) Save(namespace, id, outputFile string, stopVM bool) error {
+	fullName := internal.GenerateContainerName(namespace, id)
+	containerObj, err := e.docker.Inspect(fullName)
+	if err != nil {
+		return err
+	}
+
+	// Save base image fist into data dir
+	execCmd := []string{}
+	execConfig := types.ExecConfig{
+		AttachStdout: true,
+		Detach:       false,
+		Cmd:          execCmd,
+	}
+	execConfig.Cmd = strings.Split("cp /image/image /data/base_image", " ")
+	err = e.docker.Exec(fullName, execConfig)
+	if err != nil {
+		log.Printf("Couldn't save base image from [%v]", fullName)
+	}
+
+	// Stop VM
+	if stopVM {
+		err = e.Stop(namespace, id)
+		if err != nil {
+			log.Printf("Couldn't stop the container [%v]", containerObj.ID)
+			return err
+		}
+	}
+
+	// Save VM
+	/// Create a Backup Container
+	baseContainerName := strings.Replace(containerObj.Name, "/", "", -1)
+	backupContainerName := fmt.Sprintf("%v-backup", baseContainerName)
+	_, err = e.docker.Inspect(backupContainerName)
+	if err != nil {
+		containerConfig := &container.Config{
+			Image:    "govm/qemu",
+			Hostname: "backuptest",
+			Cmd:      []string{"sh", "-c", "while true ; do sleep 1; done"},
+			Labels:   map[string]string{},
+		}
+
+		dataDir := containerObj.Config.Labels["dataDir"]
+		currentDir, _ := os.Getwd()
+		mountBinds := []string{
+			fmt.Sprintf(vm.DataMount, dataDir),
+			fmt.Sprintf(vm.DataMount, currentDir) + "-out",
+		}
+		hostConfig := &container.HostConfig{
+			Privileged:      true,
+			PublishAllPorts: true,
+			Binds:           mountBinds,
+		}
+		networkConfig := &network.NetworkingConfig{}
+		backupContainerID, err := e.docker.Create(containerConfig, hostConfig, networkConfig, backupContainerName)
+		if err != nil {
+			log.Printf("Backup Container Error: %v", err)
+		}
+		err = e.Start(namespace, backupContainerID)
+		if err != nil {
+			log.Printf("Backup Container Starting failed: %v", err)
+		}
+	}
+	// Exec qemu backup commands
+	cmds := []string{
+		"rm /tmp/*",
+		"cp /data/base_image /data-out/",
+		"cp /data/cow_image.qcow2 /data-out/head.qcow2",
+		"qemu-img rebase -f qcow2 -F qcow2 -p -u -b /data-out/base_image /data-out/head.qcow2",
+		"qemu-img commit -p /data-out/head.qcow2",
+		fmt.Sprintf("mv /data-out/base_image /data-out/%v", outputFile),
+		"rm /data-out/head.qcow2",
+	}
+
+	for _, cmd := range cmds {
+		log.Println(cmd)
+		execConfig.Cmd = strings.Split(cmd, " ")
+		err = e.docker.Exec(backupContainerName, execConfig)
+		if err != nil {
+			log.Printf("Couldn't execute backup commands on [%v]", backupContainerName)
+		}
+	}
+
+	// Start VM
+	if stopVM {
+		err = e.Start(namespace, id)
+		if err != nil {
+			log.Printf("Couldn't start the container [%v]", containerObj.Name)
+			return err
+		}
+	}
+
+	// Remove Backup Container
+	govmID := strings.SplitN(backupContainerName, ".", 3)[2]
+	return e.Delete(namespace, govmID)
 }
 
 // List lists  all the Docker container-based VM instances

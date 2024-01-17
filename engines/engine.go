@@ -13,4 +13,5 @@ type VMEngine interface {
 	DeleteVM(namespace, id string) error
 	SSHVM(namespace, id, user, key string, term *termutil.Terminal) error
 	ListVM(namespace string, all bool) ([]vm.Instance, error)
+	SaveVM(namespace, id, outputFile string, stopVM bool) error
 }
