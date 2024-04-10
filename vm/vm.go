@@ -81,10 +81,17 @@ func (ins *Instance) Check() (err error) {
 		ins.Name = strings.Replace(internal.RandomName(), "_", "-", 1)
 	}
 
+	vmDataDirectory := ins.Workdir + "/data/" + ins.Name
+	err = os.MkdirAll(vmDataDirectory, 0740) // nolint: gas
+	if err != nil {
+		err = fmt.Errorf("unable to create: %s", vmDataDirectory)
+		return
+	}
+
 	// Check if user data is provided
 	if ins.UserData != "" {
 		ins.UserData, err = internal.CheckFilePath(ins.UserData)
-		if err != nil {
+		if err == nil {
 			// Look for a script verifying the shebang
 			var validShebang bool
 
@@ -94,7 +101,9 @@ func (ins *Instance) Check() (err error) {
 				"#!/bin/bash",
 				"#!/usr/bin/env python",
 			}
-			_, shebang, _ := bufio.ScanLines([]byte(ins.UserData), true)
+
+			userData, _ := os.ReadFile(ins.UserData)
+			_, shebang, _ := bufio.ScanLines(userData, true)
 
 			for _, sb := range validShebangs {
 				if string(shebang) == sb {
@@ -104,10 +113,17 @@ func (ins *Instance) Check() (err error) {
 
 			if !validShebang {
 				err = fmt.Errorf("unable to determine the user data content")
-				return
+				return err
 			}
-		} else {
-			return
+
+			err = ioutil.WriteFile(vmDataDirectory+"/user_data",
+				userData, 0664)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			ins.UserData = vmDataDirectory + "/user_data"
+
 		}
 	}
 
@@ -158,14 +174,6 @@ func (ins *Instance) Check() (err error) {
 		ins.NetOpts.IP = ""
 	}
 
-	vmDataDirectory := ins.Workdir + "/data/" + ins.Name
-
-	err = os.MkdirAll(vmDataDirectory, 0740) // nolint: gas
-	if err != nil {
-		err = fmt.Errorf("unable to create: %s", vmDataDirectory)
-		return
-	}
-
 	// Create the metadata file
 	metaData := ConfigDriveMetaData{
 		AvailabilityZone: "vm",
@@ -190,15 +198,6 @@ func (ins *Instance) Check() (err error) {
 	}
 
 	// Create the user_data file
-	if ins.UserData != "" {
-		err = ioutil.WriteFile(vmDataDirectory+"/user_data",
-			[]byte(ins.UserData), 0664)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		ins.UserData = vmDataDirectory + "/user_data"
-	}
 
 	return nil
 }
