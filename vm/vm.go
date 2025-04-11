@@ -90,41 +90,45 @@ func (ins *Instance) Check() (err error) {
 
 	// Check if user data is provided
 	if ins.UserData != "" {
+		// By default handle UserData as user_data file content.
+		userData := []byte(ins.UserData)
+		// But if UserData is a name of an existing file, take
+		// contents from that file.
 		ins.UserData, err = internal.CheckFilePath(ins.UserData)
 		if err == nil {
-			// Look for a script verifying the shebang
-			var validShebang bool
-
-			validShebangs := []string{
-				"#cloud-config",
-				"#!/bin/sh",
-				"#!/bin/bash",
-				"#!/usr/bin/env python",
-			}
-
-			userData, _ := os.ReadFile(ins.UserData)
-			_, shebang, _ := bufio.ScanLines(userData, true)
-
-			for _, sb := range validShebangs {
-				if string(shebang) == sb {
-					validShebang = true
-				}
-			}
-
-			if !validShebang {
-				err = fmt.Errorf("unable to determine the user data content")
-				return err
-			}
-
-			err = ioutil.WriteFile(vmDataDirectory+"/user_data",
-				userData, 0664)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			ins.UserData = vmDataDirectory + "/user_data"
+			userData, _ = os.ReadFile(ins.UserData)
 
 		}
+		// Look for a script verifying the shebang
+		var validShebang bool
+
+		validShebangs := []string{
+			"#cloud-config",
+			"#!/bin/sh",
+			"#!/bin/bash",
+			"#!/usr/bin/env python",
+		}
+
+		_, shebang, _ := bufio.ScanLines(userData, true)
+
+		for _, sb := range validShebangs {
+			if string(shebang) == sb {
+				validShebang = true
+			}
+		}
+
+		if !validShebang {
+			err = fmt.Errorf("unable to determine the user data content")
+			return err
+		}
+
+		err = ioutil.WriteFile(vmDataDirectory+"/user_data",
+			userData, 0664)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		ins.UserData = vmDataDirectory + "/user_data"
 	}
 
 	if ins.Size == (Size{}) {
