@@ -68,15 +68,8 @@ if [ -z "$KVM_OPTS" ]; then
   -device isa-serial,chardev=charserial0,id=serial0 \
   -serial stdio \
   -object rng-random,filename=/dev/urandom,id=rng0 -device virtio-rng-pci,rng=rng0 \
+  -overcommit mem-lock=off \
   "
-
-    if ${LAUNCHER} -version | grep -q -E 'version [0-5]'; then
-        KVM_OPTS="${KVM_OPTS} -realtime mlock=off \
-  "
-    else
-        KVM_OPTS="${KVM_OPTS} -overcommit mem-lock=off \
-  "
-    fi
 fi
 
 # -serial telnet::4555,server,nowait \
