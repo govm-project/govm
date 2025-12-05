@@ -7,7 +7,7 @@ require (
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.9
 	github.com/intel/tfortools v0.3.0
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.1
 	github.com/urfave/cli/v2 v2.23.5
 	golang.org/x/crypto v0.21.0
 	golang.org/x/net v0.23.0
